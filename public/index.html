@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,17 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SAHAY — National Disaster Relief, Camp Discovery &amp; Family Reunification Portal</title>
   <meta name="description" content="Official Government &amp; NGO Disaster Relief Platform for Smart India Hackathon 2026. Real-time verified relief camps, AI-assisted missing person matching, and cross-camp logistics.">
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  
+
   <!-- Free OpenStreetMap Leaflet Library -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- FIX #2: defer added so this script no longer blocks HTML parsing while it downloads from unpkg -->
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <link rel="stylesheet" href="css/style.css">
+  <!-- FIX #1: absolute path so this still resolves correctly when index.html is served
+       via the SPA fallback for a non-root path like /camps or /missing -->
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
@@ -86,32 +90,36 @@
 
   <!-- =========================================================================
        3. MULTI-VIEW NAVIGATION BAR WITH ROLE SELECTOR
+       FIX #3: aria-selected + aria-controls added to each tab; each corresponding
+       panel below now carries role="tabpanel" + aria-labelledby. If app.js swaps
+       the "active" class when switching tabs, it should also flip aria-selected
+       on the buttons (set the previously active one to "false", the new one to "true").
        ========================================================================= -->
   <nav class="app-navbar-strip" aria-label="Portal Navigation">
     <div class="navbar-container">
       <div class="nav-tabs-group" role="tablist">
-        <button class="nav-tab-btn active" data-tab="home" role="tab" title="Home Overview">
+        <button class="nav-tab-btn active" data-tab="home" role="tab" id="navtab-home" aria-selected="true" aria-controls="tab-home" title="Home Overview">
           🏠 Home
         </button>
-        <button class="nav-tab-btn" data-tab="map" role="tab" title="Find Relief Camps &amp; Live Map">
+        <button class="nav-tab-btn" data-tab="map" role="tab" id="navtab-map" aria-selected="false" aria-controls="tab-map" title="Find Relief Camps &amp; Live Map">
           🗺️ Camps &amp; Map <span class="tab-badge-pill" id="badge-camps-count">5</span>
         </button>
-        <button class="nav-tab-btn" data-tab="camp-details" role="tab" title="Camp Specific Details">
+        <button class="nav-tab-btn" data-tab="camp-details" role="tab" id="navtab-camp-details" aria-selected="false" aria-controls="tab-camp-details" title="Camp Specific Details">
           📋 Details
         </button>
-        <button class="nav-tab-btn" data-tab="missing" role="tab" title="Missing Persons Registry">
+        <button class="nav-tab-btn" data-tab="missing" role="tab" id="navtab-missing" aria-selected="false" aria-controls="tab-missing" title="Missing Persons Registry">
           🔍 Missing <span class="tab-badge-pill" id="badge-missing-count">4</span>
         </button>
-        <button class="nav-tab-btn" data-tab="ai-matches" role="tab" title="AI Multimodal Face &amp; Phonetic Matches">
+        <button class="nav-tab-btn" data-tab="ai-matches" role="tab" id="navtab-ai-matches" aria-selected="false" aria-controls="tab-ai-matches" title="AI Multimodal Face &amp; Phonetic Matches">
           🤖 AI Matches <span class="tab-badge-pill" id="badge-matches-count" style="background:#1E63D5;">2</span>
         </button>
-        <button class="nav-tab-btn" data-tab="verification" role="tab" title="Volunteer Human-in-the-Loop Audit">
+        <button class="nav-tab-btn" data-tab="verification" role="tab" id="navtab-verification" aria-selected="false" aria-controls="tab-verification" title="Volunteer Human-in-the-Loop Audit">
           🛡️ Review
         </button>
-        <button class="nav-tab-btn" data-tab="camp-admin" role="tab" title="Camp Lead Logistics &amp; Sitrep">
+        <button class="nav-tab-btn" data-tab="camp-admin" role="tab" id="navtab-camp-admin" aria-selected="false" aria-controls="tab-camp-admin" title="Camp Lead Logistics &amp; Sitrep">
           📊 Admin
         </button>
-        <button class="nav-tab-btn" data-tab="alerts" role="tab" title="Disaster Alerts &amp; SitRep Broadcasts">
+        <button class="nav-tab-btn" data-tab="alerts" role="tab" id="navtab-alerts" aria-selected="false" aria-controls="tab-alerts" title="Disaster Alerts &amp; SitRep Broadcasts">
           🔔 Alerts <span class="tab-badge-pill" id="badge-alerts-count" style="background:var(--emergency-red);">3</span>
         </button>
       </div>
@@ -230,7 +238,7 @@
     <!-- =======================================================================
          TAB 0: HOME / CITIZEN LANDING OVERVIEW
          ======================================================================= -->
-    <div class="tab-view-panel active" id="tab-home">
+    <div class="tab-view-panel active" id="tab-home" role="tabpanel" aria-labelledby="navtab-home">
       <!-- Fast GPS & Proximity Radar -->
       <div class="card-box" style="padding:1.25rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
@@ -341,7 +349,7 @@
     <!-- =======================================================================
          TAB 1 / SCREEN 02: FIND RELIEF CAMP (INTERACTIVE MAP & FILTERS)
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-map">
+    <div class="tab-view-panel" id="tab-map" role="tabpanel" aria-labelledby="navtab-map">
       <!-- GPS & Sector Toolbar -->
       <div class="card-box" style="padding:1rem 1.25rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
@@ -401,7 +409,7 @@
     <!-- =======================================================================
          TAB 2 / SCREEN 03: CAMP DETAILS VIEW
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-camp-details">
+    <div class="tab-view-panel" id="tab-camp-details" role="tabpanel" aria-labelledby="navtab-camp-details">
       <div class="card-box" style="max-width:840px; margin:0 auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
           <div>
@@ -471,7 +479,7 @@
     <!-- =======================================================================
          TAB 3 / SCREEN 05: MISSING PERSONS REGISTRY
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-missing">
+    <div class="tab-view-panel" id="tab-missing" role="tabpanel" aria-labelledby="navtab-missing">
       <div class="section-head">
         <div>
           <h3 class="section-h2">Missing Persons &amp; Family Search Registry</h3>
@@ -501,7 +509,7 @@
     <!-- =======================================================================
          TAB 5 / SCREEN 06: AI MATCH RESULTS
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-ai-matches">
+    <div class="tab-view-panel" id="tab-ai-matches" role="tabpanel" aria-labelledby="navtab-ai-matches">
       <div class="section-head">
         <div>
           <h3 class="section-h2">🤖 Multimodal AI Match Candidates</h3>
@@ -517,7 +525,7 @@
     <!-- =======================================================================
          TAB 6 / SCREEN 07: VOLUNTEER VERIFICATION QUEUE
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-verification">
+    <div class="tab-view-panel" id="tab-verification" role="tabpanel" aria-labelledby="navtab-verification">
       <div class="section-head">
         <div>
           <h3 class="section-h2">🛡️ Volunteer Verification &amp; Audit Queue</h3>
@@ -533,7 +541,7 @@
     <!-- =======================================================================
          TAB 7 / SCREEN 08: CAMP ADMIN DASHBOARD (CAMP LEAD & NGO VIEW)
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-camp-admin">
+    <div class="tab-view-panel" id="tab-camp-admin" role="tabpanel" aria-labelledby="navtab-camp-admin">
       <!-- Camp Lead Banner Card -->
       <div class="camp-admin-header-card">
         <div>
@@ -627,7 +635,7 @@
     <!-- =======================================================================
          TAB 7: MULTI-CAMP EMERGENCY BROADCAST FEED & SMS GATEWAY
          ======================================================================= -->
-    <div class="tab-view-panel" id="tab-alerts">
+    <div class="tab-view-panel" id="tab-alerts" role="tabpanel" aria-labelledby="navtab-alerts">
       <div class="section-head">
         <div>
           <h3 class="section-h2">🔔 Multi-Camp Emergency Broadcast &amp; Alert Feed</h3>
@@ -789,7 +797,7 @@
           <div class="form-field">
             <label>Person Photo (Optional)</label>
             <input type="hidden" name="photoUrl" id="report-photo-data">
-            
+
             <div class="photo-picker-actions" id="report-photo-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
               <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-open" data-target="report">
                 📷 Take Photo with Camera
@@ -883,7 +891,7 @@
           <div class="form-field">
             <label>Person Photo (Optional)</label>
             <input type="hidden" name="photoUrl" id="survivor-photo-data">
-            
+
             <div class="photo-picker-actions" id="survivor-photo-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
               <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-open" data-target="survivor">
                 📷 Take Photo with Camera
@@ -978,6 +986,11 @@
           </div>
 
           <!-- Role & Private Security PIN Setup for this Camp -->
+          <!-- FIX #4: default value="9999" / value="1234" removed from the two PIN fields below.
+               Those were the same master bypass PINs api.js accepts, and having them pre-filled
+               meant anyone could read the "confidential" PIN straight out of view-source before
+               a camp lead ever chose their own. Fields now start empty; the helper text below
+               still tells demo users what the seed-camp defaults are for convenience. -->
           <div class="card-box" style="padding:1rem; margin-bottom:1rem; background:var(--bg-card-subtle); border-left:4px solid var(--primary-action);">
             <div style="font-size:0.85rem; font-weight:800; color:var(--primary-deep); margin-bottom:0.4rem;">
               🔐 Camp Security &amp; Access PIN Configuration
@@ -999,12 +1012,12 @@
             <div class="form-row-2">
               <div class="form-field" style="margin-bottom:0;">
                 <label>Set Coordinator PIN (For Admin Access) *</label>
-                <input type="password" name="adminPin" id="new-camp-admin-pin" class="form-control" placeholder="e.g. 5555" maxlength="8" required value="9999">
+                <input type="password" name="adminPin" id="new-camp-admin-pin" class="form-control" placeholder="Choose a 4+ digit PIN" maxlength="8" required>
                 <span style="font-size:0.7rem; color:var(--text-light);">Only you use this to manage supplies.</span>
               </div>
               <div class="form-field" style="margin-bottom:0;">
                 <label>Set Volunteer PIN (For Match Audits) *</label>
-                <input type="password" name="volunteerPin" id="new-camp-vol-pin" class="form-control" placeholder="e.g. 1111" maxlength="8" required value="1234">
+                <input type="password" name="volunteerPin" id="new-camp-vol-pin" class="form-control" placeholder="Choose a 4+ digit PIN" maxlength="8" required>
                 <span style="font-size:0.7rem; color:var(--text-light);">Share with on-ground verification desk.</span>
               </div>
             </div>
@@ -1020,7 +1033,7 @@
                 📍 Use My Current Location (GPS Auto-Fill)
               </button>
             </div>
-            
+
             <div class="form-row-2">
               <div class="form-field" style="margin-bottom:0;">
                 <label style="font-size:0.75rem; color:var(--text-light);">Latitude Coordinates</label>
@@ -1148,11 +1161,11 @@
           <div class="form-row-2">
             <div class="form-field">
               <label>Responder Name *</label>
-              <input type="text" id="role-auth-name" class="form-control" placeholder="e.g. Anil Roy" required value="Anil Roy">
+              <input type="text" id="role-auth-name" class="form-control" placeholder="e.g. Anil Roy" required>
             </div>
             <div class="form-field">
               <label>Agency / Organization *</label>
-              <input type="text" id="role-auth-org" class="form-control" placeholder="e.g. NDRF Disaster Taskforce" required value="NDRF Disaster Taskforce">
+              <input type="text" id="role-auth-org" class="form-control" placeholder="e.g. NDRF Disaster Taskforce" required>
             </div>
           </div>
 
@@ -1179,6 +1192,7 @@
   <div id="toast-container" class="toast-stack"></div>
 
   <!-- Application Logic -->
-  <script type="module" src="js/app.js"></script>
+  <!-- FIX #1: absolute path, see note near the CSS link above -->
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>
