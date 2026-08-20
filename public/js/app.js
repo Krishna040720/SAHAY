@@ -45,19 +45,23 @@ class SahayApp {
   async init() {
     console.log('[SAHAY] Initializing National Disaster Relief Hub...');
 
-    this.initMaps();
-    this.setupNavigation();
-    this.setupRoleAuthentication();
-    this.setupAccessibilityAndLang();
-    this.setupQuickActions();
-    this.setupGps();
-    this.setupPhotoPickers();
-    this.setupModals();
-    this.setupDraftAutoSave();
-    this.setupNetworkMonitor();
-    this.setupCampAdminControls();
+    try { this.initMaps(); } catch (e) { console.warn('[InitMaps]', e); }
+    try { this.setupNavigation(); } catch (e) { console.warn('[SetupNav]', e); }
+    try { this.setupRoleAuthentication(); } catch (e) { console.warn('[SetupAuth]', e); }
+    try { this.setupAccessibilityAndLang(); } catch (e) { console.warn('[SetupA11y]', e); }
+    try { this.setupQuickActions(); } catch (e) { console.warn('[SetupQuickActions]', e); }
+    try { this.setupGps(); } catch (e) { console.warn('[SetupGPS]', e); }
+    try { this.setupPhotoPickers(); } catch (e) { console.warn('[SetupPhotoPickers]', e); }
+    try { this.setupModals(); } catch (e) { console.warn('[SetupModals]', e); }
+    try { this.setupDraftAutoSave(); } catch (e) { console.warn('[SetupDrafts]', e); }
+    try { this.setupNetworkMonitor(); } catch (e) { console.warn('[SetupNetworkMonitor]', e); }
+    try { this.setupCampAdminControls(); } catch (e) { console.warn('[SetupCampAdmin]', e); }
 
-    await this.loadData();
+    try {
+      await this.loadData();
+    } catch (e) {
+      console.warn('[Initial LoadData]', e);
+    }
 
     // Background sync heartbeat (every 12s)
     setInterval(() => this.loadData(true), 12000);
@@ -1668,7 +1672,15 @@ class SahayApp {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.sahayApp = new SahayApp();
-  window.sahayApp.init();
-});
+function bootSahay() {
+  if (!window.sahayApp) {
+    window.sahayApp = new SahayApp();
+    window.sahayApp.init().catch((err) => console.error('[SAHAY Boot Error]', err));
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootSahay);
+} else {
+  bootSahay();
+}
