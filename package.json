@@ -5,9 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "agy-node server.js",
-    "test": "agy-node --test tests/*.test.js",
-    "dev": "agy-node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "dev": "node server.js"
   },
   "keywords": [
     "disaster-relief",
