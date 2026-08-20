@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAHAY — National Disaster Relief, Camp Discovery &amp; Family Reunification Portal</title>
+  <meta name="description" content="Official Government &amp; NGO Disaster Relief Platform for Smart India Hackathon 2026. Real-time verified relief camps, AI-assisted missing person matching, and cross-camp logistics.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Free OpenStreetMap Leaflet Library -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       1. TOP NATIONAL DISASTER HELPLINE RIBBON & ACCESSIBILITY CONTROLS
+       ========================================================================= -->
+  <div class="national-disaster-ribbon">
+    <div class="ribbon-container">
+      <div class="ribbon-left">
+        <span class="ribbon-badge-gov">
+          🏛️ NDMA &bull; SDMA &bull; Smart India Hackathon 2026 Emergency Portal
+        </span>
+        <div class="ribbon-hotlines">
+          <span>Emergency: <strong>112</strong></span>
+          <span>NDMA: <strong>1078</strong></span>
+          <span>Disaster Helpline: <strong>1070</strong></span>
+          <span>Childline: <strong>1098</strong></span>
+          <span>Toll-Free: <strong>1800-SAHAY-AID</strong></span>
+        </div>
+      </div>
+      <div class="ribbon-right">
+        <button class="accessibility-btn" id="btn-contrast-toggle" title="Toggle High Contrast Mode">🌓 Contrast</button>
+        <button class="accessibility-btn" id="btn-font-dec" title="Decrease Text Size">A-</button>
+        <button class="accessibility-btn" id="btn-font-reset" title="Normal Text Size">A</button>
+        <button class="accessibility-btn" id="btn-font-inc" title="Increase Text Size">A+</button>
+        <select class="lang-select" id="app-language-select" title="Change Language">
+          <option value="en">English (EN)</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+          <option value="as">অসমীয়া (Assamese)</option>
+          <option value="bn">বাংলা (Bengali)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tricolor Accent Ribbon -->
+  <div class="tricolor-stripe"></div>
+
+  <!-- =========================================================================
+       2. OFFICIAL PORTAL HEADER
+       ========================================================================= -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-emblem-badge">S</div>
+        <div class="brand-title-group">
+          <h1 id="lbl-portal-title">SAHAY — Disaster Relief Network</h1>
+          <p id="lbl-portal-sub">Smart AI for Humanitarian Aid &amp; Yielding Relief &bull; Northeast &amp; Flood Operations Sector</p>
+        </div>
+      </div>
+
+      <div class="header-actions-group">
+        <span class="status-tag green" id="system-status-indicator">
+          <span class="gps-pulse-ring"></span> <span id="lbl-status-text">Online &bull; Live Sync</span>
+        </span>
+        <button class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-header-setup-camp">
+          ⛺ + Setup Camp
+        </button>
+        <button class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-header-register-camp">
+          📝 Survivor Check-in
+        </button>
+        <button class="btn-ui btn-ui-emergency btn-ui-sm" id="btn-hero-report">
+          🚨 File Missing Report
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       3. MULTI-VIEW NAVIGATION BAR WITH ROLE SELECTOR
+       ========================================================================= -->
+  <nav class="app-navbar-strip" aria-label="Portal Navigation">
+    <div class="navbar-container">
+      <div class="nav-tabs-group" role="tablist">
+        <button class="nav-tab-btn active" data-tab="home" role="tab" title="Home Overview">
+          🏠 Home
+        </button>
+        <button class="nav-tab-btn" data-tab="map" role="tab" title="Find Relief Camps &amp; Live Map">
+          🗺️ Camps &amp; Map <span class="tab-badge-pill" id="badge-camps-count">5</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="camp-details" role="tab" title="Camp Specific Details">
+          📋 Details
+        </button>
+        <button class="nav-tab-btn" data-tab="missing" role="tab" title="Missing Persons Registry">
+          🔍 Missing <span class="tab-badge-pill" id="badge-missing-count">4</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="ai-matches" role="tab" title="AI Multimodal Face &amp; Phonetic Matches">
+          🤖 AI Matches <span class="tab-badge-pill" id="badge-matches-count" style="background:#1E63D5;">2</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="verification" role="tab" title="Volunteer Human-in-the-Loop Audit">
+          🛡️ Review
+        </button>
+        <button class="nav-tab-btn" data-tab="camp-admin" role="tab" title="Camp Lead Logistics &amp; Sitrep">
+          📊 Admin
+        </button>
+        <button class="nav-tab-btn" data-tab="alerts" role="tab" title="Disaster Alerts &amp; SitRep Broadcasts">
+          🔔 Alerts <span class="tab-badge-pill" id="badge-alerts-count" style="background:var(--emergency-red);">3</span>
+        </button>
+      </div>
+
+      <div class="role-switcher-box" id="role-status-container">
+        <span id="role-label-tag">Role:</span>
+        <select class="role-select" id="user-role-select" title="Switch User Role">
+          <option value="citizen">Survivor / Citizen</option>
+          <option value="volunteer">🔒 Volunteer (PIN Req)</option>
+          <option value="camp-admin">🔒 Camp Lead (PIN Req)</option>
+        </select>
+        <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-role-logout" style="display:none; padding:0.18rem 0.55rem; font-size:0.72rem; border-radius:var(--radius-full); background:rgba(239, 68, 68, 0.2); color:#FCA5A5; border-color:rgba(239, 68, 68, 0.4);">
+          🔒 Lock Role
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =========================================================================
+       4. CITIZEN HERO BANNER & IMMEDIATE CRISIS ACTIONS
+       ========================================================================= -->
+  <section class="hero-banner" id="portal-hero-section">
+    <div class="hero-container">
+      <div class="hero-alert-ticker">
+        <span>⚡ LIVE DISASTER ADVISORY:</span> Active Monsoon Flood Inundation &bull; Brahmaputra &amp; Barak River Basins
+      </div>
+      <h2 class="hero-headline">National Disaster Relief &amp; Family Reunification Hub</h2>
+      <p class="hero-desc">
+        Locate verified emergency relief camps with live bed availability, report missing loved ones with multimodal AI matching, and broadcast emergency SOS over high-speed networks or offline 2G SMS.
+      </p>
+
+      <div class="quick-actions-row">
+        <!-- Action 1: Find Safe Shelter -->
+        <div class="action-card" id="card-action-shelter">
+          <div class="action-icon">⛺</div>
+          <div>
+            <div class="action-title">Find Nearest Safe Camp</div>
+            <div class="action-desc">Check available beds, food supplies &amp; GPS routing</div>
+          </div>
+        </div>
+
+        <!-- Action 2: Report Missing -->
+        <div class="action-card" id="card-action-report">
+          <div class="action-icon">🔍</div>
+          <div>
+            <div class="action-title">Report Missing Loved One</div>
+            <div class="action-desc">Photo-first upload &amp; instant AI registry search</div>
+          </div>
+        </div>
+
+        <!-- Action 3: Survivor Check-in -->
+        <div class="action-card" id="card-action-register-camp">
+          <div class="action-icon">📝</div>
+          <div>
+            <div class="action-title">Survivor Camp Check-in</div>
+            <div class="action-desc">Register at shelter so families &amp; authorities can find you</div>
+          </div>
+        </div>
+
+        <!-- Action 4: Setup New Camp -->
+        <div class="action-card" id="card-action-setup-camp" style="background:rgba(30, 99, 213, 0.25); border-color:#60A5FA;">
+          <div class="action-icon" style="background:#1E63D5;">🛠️</div>
+          <div>
+            <div class="action-title">+ Setup New Relief Camp</div>
+            <div class="action-desc">For Rescue Forces, NDRF &amp; District NGOs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       5. MAIN CONTENT AREA
+       ========================================================================= -->
+  <main class="main-content">
+
+    <!-- SITUATION REPORT (SITREP) STATS STRIP -->
+    <div class="sitrep-bar">
+      <div class="sitrep-card">
+        <div class="sitrep-icon-box" style="background:rgba(18, 58, 99, 0.1); color:var(--primary-deep);">⛺</div>
+        <div>
+          <div class="sitrep-val" id="sitrep-camps">5</div>
+          <div class="sitrep-label">Active Relief Camps</div>
+        </div>
+      </div>
+      <div class="sitrep-card">
+        <div class="sitrep-icon-box" style="background:rgba(22, 132, 91, 0.1); color:var(--success-green);">🛏️</div>
+        <div>
+          <div class="sitrep-val" id="sitrep-beds">817</div>
+          <div class="sitrep-label">Beds Available</div>
+        </div>
+      </div>
+      <div class="sitrep-card">
+        <div class="sitrep-icon-box" style="background:rgba(217, 119, 6, 0.1); color:var(--warning-orange);">🔍</div>
+        <div>
+          <div class="sitrep-val" id="sitrep-missing">4</div>
+          <div class="sitrep-label">Missing Inquiries</div>
+        </div>
+      </div>
+      <div class="sitrep-card">
+        <div class="sitrep-icon-box" style="background:rgba(22, 132, 91, 0.1); color:var(--success-green);">💚</div>
+        <div>
+          <div class="sitrep-val" id="sitrep-reunited">0</div>
+          <div class="sitrep-label">Families Reunited</div>
+        </div>
+      </div>
+      <div class="sitrep-card">
+        <div class="sitrep-icon-box" style="background:rgba(30, 99, 213, 0.1); color:var(--primary-action);">🚤</div>
+        <div>
+          <div class="sitrep-val" id="sitrep-teams">18</div>
+          <div class="sitrep-label">NDRF Teams Deployed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 0: HOME / CITIZEN LANDING OVERVIEW
+         ======================================================================= -->
+    <div class="tab-view-panel active" id="tab-home">
+      <!-- Fast GPS & Proximity Radar -->
+      <div class="card-box" style="padding:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+            <button class="btn-gps-locate" id="btn-use-my-gps-home">
+              <span class="gps-pulse-ring"></span>
+              📍 Use My Current GPS Location
+            </button>
+            <span style="font-size:0.85rem; color:var(--text-light);">or choose sector:</span>
+          </div>
+
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.0207" data-lng="89.9744" data-name="Dhubri Sector">📍 Dhubri</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.1158" data-lng="91.7582" data-name="Guwahati West">📍 Guwahati</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="24.8333" data-lng="92.7789" data-name="Silchar Center">📍 Silchar</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.3216" data-lng="91.0048" data-name="Barpeta Lowlands">📍 Barpeta</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.6338" data-lng="92.7926" data-name="Tezpur Hub">📍 Tezpur</button>
+          </div>
+        </div>
+        <div id="nearest-camp-result-home" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <!-- Quick Home Split View (Screen 01 wireframe) -->
+      <div class="split-grid-2">
+        <div class="card-box" style="padding:1.25rem;">
+          <div class="section-head">
+            <div>
+              <h3 class="section-h2">Emergency Rapid Actions</h3>
+              <p class="section-sub">Immediate actions for disaster survivors &amp; relatives</p>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.85rem;">
+            <button class="btn-ui btn-ui-primary btn-ui-lg" id="btn-home-find-camp-direct" style="width:100%;">
+              ⛺ FIND NEAREST RELIEF CAMP
+            </button>
+            <button class="btn-ui btn-ui-secondary btn-ui-lg" id="btn-home-missing-direct" style="width:100%;">
+              🔍 REPORT MISSING PERSON
+            </button>
+            <button class="btn-ui btn-ui-secondary btn-ui-lg" id="btn-home-checkin-direct" style="width:100%;">
+              📝 SURVIVOR CAMP CHECK-IN
+            </button>
+          </div>
+        </div>
+
+        <div class="card-box" style="padding:1.25rem;">
+          <div class="section-head">
+            <div>
+              <h3 class="section-h2">Live Verified Camps in Sector</h3>
+              <p class="section-sub">Verified &bull; Live Bed Vacancies &bull; Supplies</p>
+            </div>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-home-view-all-camps">
+              View All ➔
+            </button>
+          </div>
+          <div class="camps-stack" id="home-camps-summary-list" style="max-height:280px;">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFICIAL TRUST & VERIFICATION SECTION (HOME PAGE ONLY) -->
+      <section class="trust-assurance-section">
+        <h3 class="trust-section-title">Official Humanitarian Assurance &amp; Standards</h3>
+        <p class="trust-section-sub">
+          Built according to NDMA and international humanitarian relief guidelines to ensure rapid response, zero false rumors, and safe family reunifications.
+        </p>
+
+        <div class="trust-pillars-grid">
+          <!-- Pillar 1: Verified Camps -->
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon">🏛️</div>
+            <h4 class="trust-pillar-heading">100% Verified Camp Data</h4>
+            <p class="trust-pillar-text">
+              Every relief shelter is verified by District Magistrates and NDRF coordinators with certified GPS coordinates and direct camp lead contact numbers.
+            </p>
+          </div>
+
+          <!-- Pillar 2: AI + Human-in-the-Loop -->
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon">🤖</div>
+            <h4 class="trust-pillar-heading">AI + Human-in-the-Loop</h4>
+            <p class="trust-pillar-text">
+              AI generates candidate matches using photo vectors and phonetic fuzzy matching, but trained volunteer reviewers audit every match before family notification.
+            </p>
+          </div>
+
+          <!-- Pillar 3: Offline GSM/SMS Fallback -->
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon">📡</div>
+            <h4 class="trust-pillar-heading">Offline 2G SMS Gateway</h4>
+            <p class="trust-pillar-text">
+              Works during complete mobile data and fiber blackout. Encrypted SMS commands update camp vacancies, report survivors, and trigger search alerts.
+            </p>
+          </div>
+
+          <!-- Pillar 4: Child & Data Protection -->
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon">🔒</div>
+            <h4 class="trust-pillar-heading">Privacy &amp; DPDP Safeguard</h4>
+            <p class="trust-pillar-text">
+              Strict role-based access control protecting minors and vulnerable individuals. Immutable audit logging on all identification and handover passes.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- =======================================================================
+         TAB 1 / SCREEN 02: FIND RELIEF CAMP (INTERACTIVE MAP & FILTERS)
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-map">
+      <!-- GPS & Sector Toolbar -->
+      <div class="card-box" style="padding:1rem 1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+            <button class="btn-gps-locate" id="btn-use-my-gps">
+              <span class="gps-pulse-ring"></span>
+              📍 Use My Current GPS Location
+            </button>
+            <span style="font-size:0.85rem; color:var(--text-light);">or choose sector:</span>
+          </div>
+
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.0207" data-lng="89.9744" data-name="Dhubri Sector">📍 Dhubri</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.1158" data-lng="91.7582" data-name="Guwahati West">📍 Guwahati</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="24.8333" data-lng="92.7789" data-name="Silchar Center">📍 Silchar</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.3216" data-lng="91.0048" data-name="Barpeta Lowlands">📍 Barpeta</button>
+            <button class="btn-ui btn-ui-secondary btn-ui-sm btn-locator-preset" data-lat="26.6338" data-lng="92.7926" data-name="Tezpur Hub">📍 Tezpur</button>
+          </div>
+        </div>
+        <div id="nearest-camp-result" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <div class="split-grid-2">
+        <!-- Interactive Leaflet Map -->
+        <div class="leaflet-map-wrapper">
+          <div id="map-canvas-box"></div>
+        </div>
+
+        <!-- Relief Camps List & Interactive Filters -->
+        <div>
+          <div class="section-head">
+            <div>
+              <h3 class="section-h2">Verified Relief Camps</h3>
+              <p class="section-sub">Live bed vacancies, exact coordinates &amp; phone contacts</p>
+            </div>
+            <button class="btn-ui btn-ui-primary btn-ui-sm" id="btn-open-add-camp">
+              ⛺ + Setup New Camp
+            </button>
+          </div>
+
+          <!-- Camp Quick Filters -->
+          <div class="filter-chip-group">
+            <button class="filter-chip active" data-filter="ALL">All Camps</button>
+            <button class="filter-chip" data-filter="OPEN">🟢 Open Beds</button>
+            <button class="filter-chip" data-filter="FULL">🔴 Near / Full</button>
+            <button class="filter-chip" data-filter="MEDICAL">🩺 Medical Post</button>
+            <button class="filter-chip" data-filter="CHILD">👶 Child/Women Safe</button>
+          </div>
+
+          <div class="camps-stack" id="camps-list-container">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 2 / SCREEN 03: CAMP DETAILS VIEW
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-camp-details">
+      <div class="card-box" style="max-width:840px; margin:0 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <span class="status-tag green">VERIFIED &bull; LIVE UPDATE</span>
+            <h2 class="section-h2" id="detail-camp-name" style="margin-top:0.35rem; font-size:1.6rem;">Dhubri High School Relief Camp</h2>
+            <p class="section-sub" id="detail-camp-loc">📍 Ward 4, Dhubri District &bull; Distance: <strong>1.2 km from you</strong></p>
+          </div>
+          <select class="form-control" id="select-active-camp-detail" style="max-width:240px; font-weight:700;">
+            <!-- Loaded dynamically -->
+          </select>
+        </div>
+
+        <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:1rem; border-radius:var(--radius-md); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div>
+            <div style="font-size:1.3rem; font-weight:900; color:#166534;" id="detail-camp-beds">42 beds available</div>
+            <div style="font-size:0.8rem; color:#15803D;">Verified &bull; Live &bull; Updated 4 mins ago</div>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <a href="#" id="detail-btn-directions" target="_blank" class="btn-ui btn-ui-primary">
+              🧭 GET DIRECTIONS
+            </a>
+            <button class="btn-ui btn-ui-secondary" id="detail-btn-report-change">
+              📝 REPORT CHANGE
+            </button>
+          </div>
+        </div>
+
+        <div class="split-grid-2" style="margin-bottom:1.5rem;">
+          <div class="gauge-card">
+            <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:0.5rem;">🍲 Food &amp; Ration Status</h4>
+            <div style="font-size:1.1rem; font-weight:700; color:var(--text-main);" id="detail-food-text">Food Stock: 3.5 Days Buffer</div>
+            <div class="bar-track" style="margin-top:0.4rem;">
+              <div class="bar-fill safe" id="detail-food-bar" style="width:75%;"></div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Community Kitchen running 3 meals/day</div>
+          </div>
+
+          <div class="gauge-card">
+            <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:0.5rem;">🩺 Medical &amp; Sanitation</h4>
+            <div style="font-size:1.1rem; font-weight:700; color:var(--text-main);" id="detail-med-text">24/7 First Aid &bull; Paracetamol LOW</div>
+            <div class="bar-track" style="margin-top:0.4rem;">
+              <div class="bar-fill warn" id="detail-med-bar" style="width:40%;"></div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Paramedics on site &bull; Emergency ambulance ready</div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-card-subtle); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.5rem;">
+          <h4 style="font-size:0.85rem; font-weight:800; margin-bottom:0.4rem;">Relief Facilities &amp; Amenities:</h4>
+          <div id="detail-amenities-tags" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <!-- Amenities -->
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid var(--border-color); flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <span style="font-size:0.8rem; color:var(--text-muted);">Camp Coordinator:</span>
+            <strong id="detail-camp-contact">Anil Roy (+91-98640-11223)</strong>
+          </div>
+          <button class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-detail-survivor-checkin">
+            + Check in Survivor at this Camp
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 3 / SCREEN 05: MISSING PERSONS REGISTRY
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-missing">
+      <div class="section-head">
+        <div>
+          <h3 class="section-h2">Missing Persons &amp; Family Search Registry</h3>
+          <p class="section-sub">Verified inquiries lodged by families, shelters &amp; field volunteers</p>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-open-register-survivor">
+            + Register at Camp
+          </button>
+          <button class="btn-ui btn-ui-emergency btn-ui-sm" id="btn-tab-report">
+            + File Missing Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div style="margin-bottom:1.5rem;">
+        <input type="text" id="missing-search-input" class="form-control" placeholder="🔍 Type name, village, landmark or district to search registry..." style="font-size:1rem; padding:0.75rem 1rem;">
+      </div>
+
+      <!-- Cards Grid -->
+      <div class="split-grid-2" id="missing-cards-grid" style="grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 5 / SCREEN 06: AI MATCH RESULTS
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-ai-matches">
+      <div class="section-head">
+        <div>
+          <h3 class="section-h2">🤖 Multimodal AI Match Candidates</h3>
+          <p class="section-sub">Explainable confidence scoring surfaced from phonetic, facial &amp; geospatial vectors</p>
+        </div>
+      </div>
+
+      <div id="ai-matches-detailed-list">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 6 / SCREEN 07: VOLUNTEER VERIFICATION QUEUE
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-verification">
+      <div class="section-head">
+        <div>
+          <h3 class="section-h2">🛡️ Volunteer Verification &amp; Audit Queue</h3>
+          <p class="section-sub">Human-in-the-loop audit protocol required before family reunification notification</p>
+        </div>
+      </div>
+
+      <div id="volunteer-verification-list">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 7 / SCREEN 08: CAMP ADMIN DASHBOARD (CAMP LEAD & NGO VIEW)
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-camp-admin">
+      <!-- Camp Lead Banner Card -->
+      <div class="camp-admin-header-card">
+        <div>
+          <span class="status-tag green" style="background:rgba(255,255,255,0.2); color:#FFFFFF; border:none;">CAMP A &bull; LIVE</span>
+          <h2 style="font-size:1.6rem; font-weight:900; margin-top:0.35rem;" id="admin-camp-title">Dhubri High School Relief Camp</h2>
+          <p style="color:#E2E8F0; font-size:0.85rem;">Coordinator: <strong>Anil Roy</strong> &bull; Emergency Sector Hotline: <strong>+91-98640-11223</strong></p>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <select class="form-control" id="select-admin-camp-switch" style="background:rgba(255,255,255,0.15); color:#FFFFFF; border-color:rgba(255,255,255,0.3); font-weight:700;">
+            <!-- Loaded dynamically -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Metric Tiles (Screen 08 Wireframe) -->
+      <div class="sitrep-bar" style="margin-bottom:1.5rem;">
+        <div class="sitrep-card">
+          <div class="sitrep-icon-box" style="background:#EFF6FF; color:var(--primary-action);">👥</div>
+          <div>
+            <div class="sitrep-val" id="admin-people-count">468</div>
+            <div class="sitrep-label">Sheltered Survivors</div>
+          </div>
+        </div>
+        <div class="sitrep-card">
+          <div class="sitrep-icon-box" style="background:#F0FDF4; color:var(--success-green);">🛏️</div>
+          <div>
+            <div class="sitrep-val" id="admin-beds-count">0</div>
+            <div class="sitrep-label">Beds Free (117% Cap)</div>
+          </div>
+        </div>
+        <div class="sitrep-card">
+          <div class="sitrep-icon-box" style="background:#FEF2F2; color:var(--emergency-red);">💊</div>
+          <div>
+            <div class="sitrep-val" style="color:var(--emergency-red);">LOW</div>
+            <div class="sitrep-label">Medicine Status</div>
+          </div>
+        </div>
+        <div class="sitrep-card">
+          <div class="sitrep-icon-box" style="background:#FFFBEB; color:var(--warning-orange);">🍲</div>
+          <div>
+            <div class="sitrep-val">2.5 D</div>
+            <div class="sitrep-label">Food Buffer Remaining</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Cross-Camp Logistics Recommendation -->
+      <div class="ai-transfer-recommendation-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div>
+            <strong style="color:var(--primary-deep); font-size:1.05rem;">⚡ AI Cross-Camp Resource Balancing Opportunity</strong>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
+              Critical shortage detected for <strong>Pediatric Medicines &amp; Clean Water</strong>. <em>Tezpur Hub</em> and <em>Guwahati Shelter</em> currently maintain 85%+ surplus.
+            </p>
+          </div>
+          <button class="btn-ui btn-ui-primary btn-ui-sm" id="btn-request-logistics-transfer">
+            REQUEST TRANSFER
+          </button>
+        </div>
+      </div>
+
+      <!-- Resource Management Sliders -->
+      <div class="card-box">
+        <h4 style="font-weight:800; font-size:1.1rem; margin-bottom:1rem; color:var(--primary-deep);">
+          🛠️ Live Camp Inventory Adjustment &amp; Requisition
+        </h4>
+        <div class="split-grid-2">
+          <div>
+            <label style="font-size:0.85rem; font-weight:700;">Clean Water Reserves (%)</label>
+            <input type="range" id="range-water" min="0" max="100" value="30" style="width:100%; margin:0.5rem 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+              <span>0% (Empty)</span><span id="lbl-water-val"><strong>30%</strong> (Low)</span><span>100% (Full)</span>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:0.85rem; font-weight:700;">Food Rations &amp; Grain (%)</label>
+            <input type="range" id="range-food" min="0" max="100" value="45" style="width:100%; margin:0.5rem 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+              <span>0% (Depleted)</span><span id="lbl-food-val"><strong>45%</strong> (2.5 Days)</span><span>100% (Surplus)</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem; display:flex; justify-content:flex-end;">
+          <button class="btn-ui btn-ui-success btn-ui-sm" id="btn-save-camp-resources">
+            ✓ Update Camp Live Sitrep
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         TAB 7: MULTI-CAMP EMERGENCY BROADCAST FEED & SMS GATEWAY
+         ======================================================================= -->
+    <div class="tab-view-panel" id="tab-alerts">
+      <div class="section-head">
+        <div>
+          <h3 class="section-h2">🔔 Multi-Camp Emergency Broadcast &amp; Alert Feed</h3>
+          <p class="section-sub">
+            Whenever a missing report, camp setup, or survivor check-in occurs, all district response hubs receive an instant high-priority broadcast.
+          </p>
+        </div>
+      </div>
+
+      <!-- Urgent Missing Broadcast Banner -->
+      <div id="urgent-broadcast-feed"></div>
+
+      <div class="card-box">
+        <h4 style="font-weight:800; font-size:1.05rem; margin-bottom:1rem; color:var(--text-main);">
+          📋 Live Multi-Agency Registration &amp; Dispatch Stream
+        </h4>
+        <div class="notifications-feed" id="alerts-notifications-feed">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+
+      <!-- Offline SMS Bridge Section -->
+      <details class="card-box" style="margin-top:2rem; cursor:pointer;" open>
+        <summary style="font-weight:700; font-size:0.95rem; color:var(--primary-deep);">
+          📡 Offline SMS Fallback Gateway (For Zero-Connectivity Disaster Zones)
+        </summary>
+        <div style="margin-top:1.25rem; cursor:default;">
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+            When mobile data and Wi-Fi networks fail, volunteers send SMS commands over 2G/GSM:
+          </p>
+          <div style="background:var(--bg-card-subtle); padding:1rem; border-radius:var(--radius-md); font-family:var(--font-mono); font-size:0.85rem; margin-bottom:1rem;">
+            • Report Missing: <code>SAHAY MISSING [Name], [Age], [Gender], [Location], [Phone]</code><br>
+            • Update Camp: <code>SAHAY CAMP [CampID] OCC [Count] WATER [%] FOOD [%]</code><br>
+            • Survivor Check-in: <code>SAHAY SURVIVOR [Name], [Age], [Gender], [CampID]</code>
+          </div>
+          <form id="form-sms-simulator" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <input type="text" id="sms-input-text" class="form-control" placeholder="Test SMS: SAHAY MISSING Tarun Das, 32, Male, Bilasipara, +919876543210" style="flex:1; min-width:280px;">
+            <button type="submit" class="btn-ui btn-ui-primary btn-ui-sm">Test Parse</button>
+          </form>
+          <div id="sms-output-box" style="margin-top:0.75rem;"></div>
+        </div>
+      </details>
+    </div>
+
+  </main>
+
+  <!-- =========================================================================
+       6. OFFICIAL FOOTER
+       ========================================================================= -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-top-grid">
+        <div>
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+            <div class="brand-emblem-badge" style="width:36px; height:36px; font-size:1.1rem;">S</div>
+            <strong style="color:#FFFFFF; font-size:1.15rem;">SAHAY DISASTER NETWORK</strong>
+          </div>
+          <p style="font-size:0.85rem; line-height:1.6; color:#94A3B8;">
+            Smart AI for Humanitarian Aid &amp; Yielding Relief &bull; Smart India Hackathon 2026 Innovation Initiative. Developed to provide real-time verified relief camp mapping, multimodal AI family matching, and 2G SMS offline resilience for disaster management authorities.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Emergency Hotlines</h4>
+          <ul class="footer-links">
+            <li><a href="tel:112">National Emergency: 112</a></li>
+            <li><a href="tel:1078">NDMA Control Room: 1078</a></li>
+            <li><a href="tel:1070">State Disaster Desk: 1070</a></li>
+            <li><a href="tel:1098">Childline: 1098</a></li>
+            <li><a href="tel:1800-SAHAY">SAHAY Desk: 1800-SAHAY</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Operations</h4>
+          <ul class="footer-links">
+            <li><a href="#" class="footer-nav-link" data-tab="map">Camp GIS Map</a></li>
+            <li><a href="#" class="footer-nav-link" data-tab="missing">Missing Registry</a></li>
+            <li><a href="#" class="footer-nav-link" data-tab="ai-matches">AI Match Engine</a></li>
+            <li><a href="#" class="footer-nav-link" data-tab="camp-admin">Camp Logistics Admin</a></li>
+            <li><a href="#" class="footer-nav-link" data-tab="alerts">SMS Gateway</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-heading">Compliance</h4>
+          <ul class="footer-links">
+            <li><a href="#">NDMA Guidelines</a></li>
+            <li><a href="#">DPDP Act 2023</a></li>
+            <li><a href="#">Volunteer Protocol</a></li>
+            <li><a href="#">SIH 2026 Handoff</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        <div>
+          &copy; 2026 Government &bull; NDRF &bull; SDMA &bull; SAHAY Open Humanitarian Initiative. MIT Licensed.
+        </div>
+        <div style="display:flex; gap:1rem;">
+          <span>High Contrast Ready</span>
+          <span>Bilingual &bull; Voice &bull; Offline Capable</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       7. MODALS
+       ========================================================================= -->
+
+  <!-- MODAL 1: FILE MISSING PERSON REPORT -->
+  <div class="modal-overlay" id="modal-report-missing" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>🚨 File Missing Person Report</h3>
+        <button class="modal-close-x modal-close-btn">&times;</button>
+      </div>
+      <form id="form-report-missing">
+        <div class="modal-body">
+          <div style="background:#FEF2F2; color:var(--emergency-red); font-size:0.85rem; padding:0.6rem 0.85rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-weight:600;">
+            ⚠️ Submitting this report triggers an instant high-priority broadcast across all relief camps.
+          </div>
+
+          <div class="form-field">
+            <label>Full Name of Missing Person *</label>
+            <input type="text" name="name" id="missing-name-input" class="form-control" placeholder="e.g. Rajesh Kumar Sharma" required>
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label>Age (Approx)</label>
+              <input type="number" name="age" id="missing-age-input" class="form-control" placeholder="35" min="0" max="125">
+            </div>
+            <div class="form-field">
+              <label>Gender</label>
+              <select name="gender" class="form-control">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Last Seen Location / Landmark *</label>
+            <input type="text" name="lastSeenLocation" id="missing-loc-input" class="form-control" placeholder="e.g. Bilasipara River Bank, Dhubri" required>
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label>Your Name (Family / Reporter)</label>
+              <input type="text" name="reporterName" id="missing-repname-input" class="form-control" placeholder="e.g. Suman Sharma (Spouse)">
+            </div>
+            <div class="form-field">
+              <label>Your Contact Phone</label>
+              <input type="tel" name="reporterContact" id="missing-repphone-input" class="form-control" placeholder="+91 98765 43210">
+            </div>
+          </div>
+
+          <!-- Photo Picker: Click Photo vs Choose from Gallery -->
+          <div class="form-field">
+            <label>Person Photo (Optional)</label>
+            <input type="hidden" name="photoUrl" id="report-photo-data">
+            
+            <div class="photo-picker-actions" id="report-photo-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-open" data-target="report">
+                📷 Take Photo with Camera
+              </button>
+              <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-gallery-open" data-target="report">
+                🖼️ Choose from Gallery
+              </button>
+              <input type="file" id="report-file-input" accept="image/*" style="display:none;">
+            </div>
+
+            <!-- Live Camera Box -->
+            <div class="camera-capture-box" id="report-camera-box" style="display:none;">
+              <video id="report-camera-video" autoplay playsinline></video>
+              <div class="camera-controls">
+                <button type="button" class="btn-ui btn-ui-primary btn-ui-sm btn-camera-snap" data-target="report">
+                  📸 Click &amp; Save Photo
+                </button>
+                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-cancel" data-target="report">
+                  Cancel Camera
+                </button>
+              </div>
+            </div>
+
+            <!-- Photo Preview -->
+            <div class="photo-preview-box" id="report-photo-preview" style="display:none;">
+              <img id="report-preview-img" src="" alt="Photo preview">
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:0.85rem; color:var(--success-green);">✓ Photo attached</div>
+                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-photo-remove" data-target="report" style="margin-top:0.25rem;">
+                  ✕ Remove Photo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Important Notes (Clothing, medical conditions)</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Wearing blue check shirt, needs daily insulin..."></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-ui btn-ui-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn-ui btn-ui-emergency">🚨 Broadcast Report to All Camps</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: REGISTER SURVIVOR CHECK-IN -->
+  <div class="modal-overlay" id="modal-register-survivor" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>📝 Register for Camp Shelter / Survivor Check-in</h3>
+        <button class="modal-close-x modal-close-btn">&times;</button>
+      </div>
+      <form id="form-register-survivor">
+        <div class="modal-body">
+          <div class="form-field">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.35rem;">
+              <label style="margin-bottom:0;">Select Relief Camp *</label>
+              <button type="button" id="btn-switch-to-new-camp" style="font-size:0.75rem; color:var(--primary-action); font-weight:700; background:none; border:none; cursor:pointer; text-decoration:underline;">
+                + Camp not listed? Setup New Camp
+              </button>
+            </div>
+            <select name="campId" id="select-survivor-camp" class="form-control" required></select>
+          </div>
+          <div class="form-field">
+            <label>Full Name *</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Rajesh Sharma" required>
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label>Age</label>
+              <input type="number" name="age" class="form-control" placeholder="36" min="0" max="125">
+            </div>
+            <div class="form-field">
+              <label>Gender</label>
+              <select name="gender" class="form-control">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Origin Village / Flooded Sector</label>
+            <input type="text" name="originVillage" class="form-control" placeholder="e.g. Bilasipara East Ward 2">
+          </div>
+
+          <!-- Photo Picker -->
+          <div class="form-field">
+            <label>Person Photo (Optional)</label>
+            <input type="hidden" name="photoUrl" id="survivor-photo-data">
+            
+            <div class="photo-picker-actions" id="survivor-photo-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-open" data-target="survivor">
+                📷 Take Photo with Camera
+              </button>
+              <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-gallery-open" data-target="survivor">
+                🖼️ Choose from Gallery
+              </button>
+              <input type="file" id="survivor-file-input" accept="image/*" style="display:none;">
+            </div>
+
+            <!-- Live Camera Box -->
+            <div class="camera-capture-box" id="survivor-camera-box" style="display:none;">
+              <video id="survivor-camera-video" autoplay playsinline></video>
+              <div class="camera-controls">
+                <button type="button" class="btn-ui btn-ui-primary btn-ui-sm btn-camera-snap" data-target="survivor">
+                  📸 Click &amp; Save Photo
+                </button>
+                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-cancel" data-target="survivor">
+                  Cancel Camera
+                </button>
+              </div>
+            </div>
+
+            <!-- Photo Preview -->
+            <div class="photo-preview-box" id="survivor-photo-preview" style="display:none;">
+              <img id="survivor-preview-img" src="" alt="Photo preview">
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:0.85rem; color:var(--success-green);">✓ Photo attached</div>
+                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-photo-remove" data-target="survivor" style="margin-top:0.25rem;">
+                  ✕ Remove Photo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Physical &amp; Medical Condition</label>
+            <input type="text" name="physicalCondition" class="form-control" placeholder="e.g. Safe, treated for minor leg scrapes">
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-ui btn-ui-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn-ui btn-ui-success">Save Check-in &amp; Check Missing Matches</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: SETUP NEW RELIEF CAMP -->
+  <div class="modal-overlay" id="modal-add-camp" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:680px;">
+      <div class="modal-head">
+        <h3>⛺ Setup &amp; Register New Relief Camp</h3>
+        <button class="modal-close-x modal-close-btn">&times;</button>
+      </div>
+      <form id="form-add-camp">
+        <div class="modal-body">
+          <div style="background:#EFF6FF; color:#1E40AF; font-size:0.85rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); margin-bottom:1.25rem; border:1px solid #BFDBFE;">
+            💡 <strong>For Rescue Teams, NDRF &amp; Local Authorities:</strong> Registering your camp places it immediately on the live GPS map, opens it for survivor check-ins, and broadcasts its location to all relief desks.
+          </div>
+
+          <div class="form-field">
+            <label>New Camp Name *</label>
+            <input type="text" name="name" id="new-camp-name" class="form-control" placeholder="e.g. Goalpara Stadium Emergency Shelter" required>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-field">
+              <label>District / Administrative Sector *</label>
+              <input type="text" name="district" id="new-camp-district" class="form-control" placeholder="e.g. Goalpara" required>
+            </div>
+            <div class="form-field">
+              <label>Total Bed Capacity *</label>
+              <input type="number" name="capacity" id="new-camp-capacity" class="form-control" placeholder="500" required min="1">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-field">
+              <label>Current Initial Occupancy</label>
+              <input type="number" name="occupancy" id="new-camp-occupancy" class="form-control" placeholder="0" min="0">
+            </div>
+            <div class="form-field">
+              <label>Camp Coordinator / Rescue Lead</label>
+              <input type="text" name="contactName" id="new-camp-contact-name" class="form-control" placeholder="e.g. Officer R. Baruah (NDRF Unit 2)">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Camp Lead Emergency Phone *</label>
+            <input type="tel" name="contactPhone" id="new-camp-contact-phone" class="form-control" placeholder="e.g. +91 94350 11223" required>
+          </div>
+
+          <!-- Role & Private Security PIN Setup for this Camp -->
+          <div class="card-box" style="padding:1rem; margin-bottom:1rem; background:var(--bg-card-subtle); border-left:4px solid var(--primary-action);">
+            <div style="font-size:0.85rem; font-weight:800; color:var(--primary-deep); margin-bottom:0.4rem;">
+              🔐 Camp Security &amp; Access PIN Configuration
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-light); margin-bottom:0.75rem;">
+              Choose your administrative role and set confidential passcodes. Only you and your on-ground desk volunteers will know these PINs to access restricted controls.
+            </p>
+
+            <div class="form-field">
+              <label>Your Administrative Role *</label>
+              <select name="adminRole" id="new-camp-admin-role" class="form-control" required>
+                <option value="Camp Lead / Disaster Commander">🎖️ Camp Lead / Disaster Commander</option>
+                <option value="SDMA Field Coordinator">🏛️ SDMA Field Coordinator</option>
+                <option value="NGO Shelter Director">🤝 NGO Shelter Director (Red Cross / Oxfam)</option>
+                <option value="Medical Relief Head">🩺 Chief Medical Officer (ICU / Dispensary)</option>
+              </select>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-field" style="margin-bottom:0;">
+                <label>Set Coordinator PIN (For Admin Access) *</label>
+                <input type="password" name="adminPin" id="new-camp-admin-pin" class="form-control" placeholder="e.g. 5555" maxlength="8" required value="9999">
+                <span style="font-size:0.7rem; color:var(--text-light);">Only you use this to manage supplies.</span>
+              </div>
+              <div class="form-field" style="margin-bottom:0;">
+                <label>Set Volunteer PIN (For Match Audits) *</label>
+                <input type="password" name="volunteerPin" id="new-camp-vol-pin" class="form-control" placeholder="e.g. 1111" maxlength="8" required value="1234">
+                <span style="font-size:0.7rem; color:var(--text-light);">Share with on-ground verification desk.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Camp Location Section with GPS Button -->
+          <div class="card-box" style="padding:1rem; margin-bottom:1rem; background:var(--bg-card-subtle);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem;">
+              <label style="font-size:0.85rem; font-weight:800; color:var(--text-main); margin-bottom:0;">
+                📍 Camp GPS Location on Map *
+              </label>
+              <button type="button" class="btn-ui btn-ui-primary btn-ui-sm" id="btn-camp-gps-autofill">
+                📍 Use My Current Location (GPS Auto-Fill)
+              </button>
+            </div>
+            
+            <div class="form-row-2">
+              <div class="form-field" style="margin-bottom:0;">
+                <label style="font-size:0.75rem; color:var(--text-light);">Latitude Coordinates</label>
+                <input type="number" step="any" name="latitude" id="new-camp-lat" class="form-control" value="26.1500" required>
+              </div>
+              <div class="form-field" style="margin-bottom:0;">
+                <label style="font-size:0.75rem; color:var(--text-light);">Longitude Coordinates</label>
+                <input type="number" step="any" name="longitude" id="new-camp-lng" class="form-control" value="91.7500" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Facilities Checklist -->
+          <div class="form-field">
+            <label>Ready Facilities &amp; Relief Services at Camp</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.85rem;">
+              <label><input type="checkbox" name="amenities" value="Clean Water Desk" checked> 💧 Clean Water</label>
+              <label><input type="checkbox" name="amenities" value="Food Hall" checked> 🍲 Community Kitchen</label>
+              <label><input type="checkbox" name="amenities" value="24/7 Medical Post" checked> 🩺 Medical Desk</label>
+              <label><input type="checkbox" name="amenities" value="Power Backup" checked> ⚡ Power Generator</label>
+              <label><input type="checkbox" name="amenities" value="Women & Child Space" checked> 👶 Child/Women Safe</label>
+              <label><input type="checkbox" name="amenities" value="Sanitation Blocks" checked> 🚻 Sanitation</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-ui btn-ui-secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn-ui btn-ui-primary" style="font-weight:700;">
+            ⛺ Establish Camp &amp; Lock PINs
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PHOTO LIGHTBOX ZOOM -->
+  <div class="lightbox-modal" id="photo-lightbox-modal" role="dialog" aria-modal="true">
+    <div class="lightbox-content">
+      <div class="lightbox-img-wrapper">
+        <img id="lightbox-img" src="" alt="Zoomed portrait">
+      </div>
+      <div class="lightbox-footer">
+        <div>
+          <strong id="lightbox-name" style="font-size:1.05rem;">Person Photo</strong>
+          <div id="lightbox-desc" style="font-size:0.8rem; color:#94A3B8;">Verified Photo Record</div>
+        </div>
+        <button class="btn-ui btn-ui-secondary btn-ui-sm" id="btn-close-lightbox" style="color:white; border-color:#475569; background:#1E293B;">
+          ✕ Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: OFFICIAL REUNIFICATION CERTIFICATE -->
+  <div class="modal-overlay" id="modal-reunification-cert" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:580px;">
+      <div class="modal-head">
+        <h3 style="color:#FFFFFF;">💚 Official Family Reunification Record</h3>
+        <button class="modal-close-x modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="certificate-card" id="reunification-print-area">
+          <div class="certificate-seal">✓</div>
+          <h3 class="certificate-title">FAMILY REUNIFICATION CONFIRMED</h3>
+          <p style="font-size:0.8rem; color:var(--text-light); margin-top:0.2rem;">
+            SAHAY National Humanitarian Disaster Response &bull; Verified Handover Protocol
+          </p>
+
+          <div class="certificate-body" id="certificate-details-box">
+            <!-- Loaded dynamically -->
+          </div>
+
+          <div style="font-size:0.75rem; color:var(--text-light); line-height:1.4;">
+            Verification recorded in district multi-agency emergency registry. Broadcast sent via SMS &amp; Police Mesh Radio.
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ui btn-ui-secondary modal-close-btn">Close</button>
+        <button type="button" class="btn-ui btn-ui-primary" onclick="window.print()">
+          🖨️ Print Official Handover Pass
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: OFFICIAL RESPONDER ROLE AUTHENTICATION GATE -->
+  <div class="modal-overlay" id="modal-role-auth" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="modal-head" style="background:linear-gradient(135deg, #0F2D54 0%, #0A192F 100%);">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.4rem;">🛡️</span>
+          <div>
+            <h3 style="color:#FFFFFF; font-size:1.1rem; font-weight:800; margin:0;" id="role-auth-title">Official Responder Access Gate</h3>
+            <span style="font-size:0.75rem; color:#38BDF8;">NDMA &bull; SDMA &bull; NDRF Identity Verification</span>
+          </div>
+        </div>
+        <button class="modal-close-x modal-close-btn">&times;</button>
+      </div>
+      <form id="form-role-auth">
+        <div class="modal-body" style="padding:1.25rem;">
+          <div class="alert-box-info" style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:0.85rem; margin-bottom:1rem; font-size:0.82rem; color:#1E3A8A; line-height:1.5;">
+            🔒 <strong>Confidential Access:</strong> Volunteer queues and camp resources are protected. Enter the confidential Security PIN configured by your Camp Lead or Disaster Coordinator.
+          </div>
+
+          <div class="form-field">
+            <label>Select Operational Role *</label>
+            <select class="form-control" id="role-auth-target-select" required>
+              <option value="volunteer">🛡️ Volunteer Reviewer (Identity &amp; Match Audit Desk)</option>
+              <option value="camp-admin">📊 Camp Coordinator / Admin (Resource Management &amp; Sitrep)</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Assigned Relief Camp Facility *</label>
+            <select class="form-control" id="role-auth-camp-select" required>
+              <!-- Loaded dynamically with all registered camps -->
+              <option value="ALL_CAMPS">🌐 Multi-Agency Central Operational Command</option>
+            </select>
+            <span style="font-size:0.72rem; color:var(--text-light); margin-top:0.25rem;">
+              PIN is checked against this specific camp's registered security settings.
+            </span>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-field">
+              <label>Responder Name *</label>
+              <input type="text" id="role-auth-name" class="form-control" placeholder="e.g. Anil Roy" required value="Anil Roy">
+            </div>
+            <div class="form-field">
+              <label>Agency / Organization *</label>
+              <input type="text" id="role-auth-org" class="form-control" placeholder="e.g. NDRF Disaster Taskforce" required value="NDRF Disaster Taskforce">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Confidential Security Passcode / PIN *</label>
+            <input type="password" id="role-auth-pin" class="form-control" placeholder="Enter your private 4-digit PIN" required maxlength="12">
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.35rem;">
+              💡 <em>Default seed camps PIN: <code>1234</code> for Volunteer, <code>9999</code> for Camp Lead. Custom camps use the PIN chosen during registration.</em>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn-ui btn-ui-secondary modal-close-btn" id="btn-cancel-role-auth">
+            Cancel (Stay Citizen)
+          </button>
+          <button type="submit" class="btn-ui btn-ui-primary" style="font-weight:800;">
+            🔓 Verify &amp; Unlock Controls
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-stack"></div>
+
+  <!-- Application Logic -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

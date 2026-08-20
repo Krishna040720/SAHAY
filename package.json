@@ -1,0 +1,21 @@
+{
+  "name": "sahay-disaster-relief",
+  "version": "1.0.0",
+  "description": "SAHAY: Smart AI for Humanitarian Aid & Yielding Relief - Crowdsourced Relief Camp Discovery, Missing Person Coordination & AI Matching",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "agy-node server.js",
+    "test": "agy-node --test tests/*.test.js",
+    "dev": "agy-node server.js"
+  },
+  "keywords": [
+    "disaster-relief",
+    "humanitarian-aid",
+    "fuzzy-matching",
+    "camp-coordination",
+    "offline-first"
+  ],
+  "author": "SAHAY Core Team",
+  "license": "MIT"
+}
