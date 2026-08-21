@@ -17,6 +17,7 @@
 import { api } from './api-client.js';
 import { showToast, openModal, closeModal, formatTimeAgo, escapeHtml, haversineDistance } from './ui-helpers.js';
 import { MapVisualizer } from './map-view.js';
+import { extractFaceDescriptor } from './face-recognition.js';
 
 class SahayApp {
   constructor() {
@@ -817,8 +818,10 @@ class SahayApp {
     if (video) video.srcObject = null;
   }
 
-  setPhotoPreview(target, dataUrl) {
+  async setPhotoPreview(target, dataUrl) {
     const inputHidden = document.getElementById(`${target}-photo-data`);
+    const faceInputHidden = document.getElementById(`${target}-face-descriptor`);
+    const faceStatusEl = document.getElementById(`${target}-face-status`);
     const previewBox = document.getElementById(`${target}-photo-preview`);
     const previewImg = document.getElementById(`${target}-preview-img`);
     const actionsBox = document.getElementById(`${target}-photo-actions`);
@@ -827,16 +830,45 @@ class SahayApp {
     if (previewImg) previewImg.src = dataUrl;
     if (previewBox) previewBox.style.display = 'flex';
     if (actionsBox) actionsBox.style.display = 'none';
+
+    if (faceStatusEl) {
+      faceStatusEl.innerHTML = `<span style="color:var(--primary-action);">🤖 Scanning face with face-api.js...</span>`;
+    }
+
+    try {
+      const faceResult = await extractFaceDescriptor(dataUrl);
+      if (faceResult && faceResult.detected && faceResult.descriptor) {
+        if (faceInputHidden) faceInputHidden.value = JSON.stringify(faceResult.descriptor);
+        if (faceStatusEl) {
+          faceStatusEl.innerHTML = `<span style="color:var(--success-green);">✓ Face Detected (${faceResult.confidence}% Conf &bull; 128-D Vector Ready)</span>`;
+        }
+      } else {
+        if (faceInputHidden) faceInputHidden.value = '';
+        if (faceStatusEl) {
+          faceStatusEl.innerHTML = `<span style="color:var(--emergency-amber);">ℹ️ No human face detected (Using text matching)</span>`;
+        }
+      }
+    } catch (err) {
+      console.warn('[Face Recognition Error]', err);
+      if (faceInputHidden) faceInputHidden.value = '';
+      if (faceStatusEl) {
+        faceStatusEl.innerHTML = `<span style="color:var(--text-muted);">ℹ️ Standard text matching active</span>`;
+      }
+    }
   }
 
   removePhoto(target) {
     const inputHidden = document.getElementById(`${target}-photo-data`);
+    const faceInputHidden = document.getElementById(`${target}-face-descriptor`);
+    const faceStatusEl = document.getElementById(`${target}-face-status`);
     const previewBox = document.getElementById(`${target}-photo-preview`);
     const previewImg = document.getElementById(`${target}-preview-img`);
     const actionsBox = document.getElementById(`${target}-photo-actions`);
     const fileInput = document.getElementById(`${target}-file-input`);
 
     if (inputHidden) inputHidden.value = '';
+    if (faceInputHidden) faceInputHidden.value = '';
+    if (faceStatusEl) faceStatusEl.innerHTML = '';
     if (previewImg) previewImg.src = '';
     if (fileInput) fileInput.value = '';
     if (previewBox) previewBox.style.display = 'none';
@@ -920,6 +952,12 @@ class SahayApp {
         defaultLat = 26.32; defaultLng = 91.00;
       }
 
+      let reportFaceDescriptor = null;
+      const descRaw = document.getElementById('report-face-descriptor')?.value;
+      if (descRaw) {
+        try { reportFaceDescriptor = JSON.parse(descRaw); } catch (_) {}
+      }
+
       const payload = {
         name: fd.get('name'),
         age: fd.get('age') ? Number(fd.get('age')) : null,
@@ -930,6 +968,7 @@ class SahayApp {
         reporterName: fd.get('reporterName'),
         reporterContact: fd.get('reporterContact'),
         photoUrl: document.getElementById('report-photo-data')?.value || '',
+        faceDescriptor: reportFaceDescriptor,
         notes: fd.get('notes'),
         sourceType: 'FAMILY_MEMBER',
         medicalUrgency: 'HIGH'
@@ -969,6 +1008,12 @@ class SahayApp {
         return;
       }
 
+      let survFaceDescriptor = null;
+      const survDescRaw = document.getElementById('survivor-face-descriptor')?.value;
+      if (survDescRaw) {
+        try { survFaceDescriptor = JSON.parse(survDescRaw); } catch (_) {}
+      }
+
       const payload = {
         name: fd.get('name'),
         age: fd.get('age') ? Number(fd.get('age')) : null,
@@ -976,6 +1021,7 @@ class SahayApp {
         campId: campIdVal,
         originVillage: fd.get('originVillage'),
         photoUrl: document.getElementById('survivor-photo-data')?.value || '',
+        faceDescriptor: survFaceDescriptor,
         physicalCondition: fd.get('physicalCondition')
       };
 
@@ -1617,6 +1663,12 @@ class SahayApp {
       const cLng = camp?.longitude || 89.97;
       const realDist = haversineDistance(mLat, mLng, cLat, cLng) || 4.8;
 
+      const nameScore = m.factors?.nameScore ?? 92;
+      const faceScore = m.factors?.faceScore;
+      const faceDist = m.factors?.faceDistance;
+      const locScore = m.factors?.locationScore ?? 88;
+      const ageScore = m.factors?.ageScore ?? 90;
+
       return `
         <div class="ai-match-results-box">
           <div class="ai-score-hero">
@@ -1629,7 +1681,7 @@ class SahayApp {
                 High-Confidence AI Candidate: ${escapeHtml(m.missingName)} ➔ ${escapeHtml(m.survivorName)}
               </div>
               <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
-                Surfaced by composite multi-signal analysis. Requires human volunteer confirmation before alerting family.
+                Surfaced by composite multi-signal analysis (Name, Face Embedding, Distance, Demographics). Requires human volunteer confirmation before alerting family.
               </p>
             </div>
             <button class="btn-ui btn-ui-primary btn-ui-sm btn-nav-to-verification" data-match-id="${m.id}">
@@ -1641,23 +1693,28 @@ class SahayApp {
           <div class="ai-signals-grid">
             <div class="signal-card">
               <div class="signal-title">Name &amp; Phonetic Similarity</div>
-              <div class="signal-pct-row"><span>Soundex / TokenSort</span> <strong style="color:var(--primary-action);">96%</strong></div>
-              <div class="bar-track"><div class="bar-fill safe" style="width:96%;"></div></div>
+              <div class="signal-pct-row"><span>Soundex / TokenSort</span> <strong style="color:var(--primary-action);">${nameScore}%</strong></div>
+              <div class="bar-track"><div class="bar-fill safe" style="width:${nameScore}%;"></div></div>
             </div>
             <div class="signal-card">
-              <div class="signal-title">Face &amp; Visual Similarity</div>
-              <div class="signal-pct-row"><span>Facial Vector Match</span> <strong style="color:var(--success-green);">93%</strong></div>
-              <div class="bar-track"><div class="bar-fill safe" style="width:93%;"></div></div>
+              <div class="signal-title">Face &amp; Biometric Vector</div>
+              <div class="signal-pct-row">
+                <span>${faceScore != null ? `128-D Vector (Dist: ${faceDist})` : 'Face-API Embedding'}</span>
+                <strong style="color:${faceScore != null && faceScore >= 70 ? 'var(--success-green)' : (faceScore != null ? 'var(--emergency-amber)' : 'var(--text-muted)')};">
+                  ${faceScore != null ? `${faceScore}% Match` : 'No Face Data'}
+                </strong>
+              </div>
+              <div class="bar-track"><div class="bar-fill ${faceScore != null && faceScore >= 70 ? 'safe' : (faceScore != null ? 'warning' : 'neutral')}" style="width:${faceScore ?? 0}%;"></div></div>
             </div>
             <div class="signal-card">
               <div class="signal-title">Geospatial Proximity</div>
-              <div class="signal-pct-row"><span>${realDist} km radius</span> <strong style="color:var(--primary-action);">91%</strong></div>
-              <div class="bar-track"><div class="bar-fill safe" style="width:91%;"></div></div>
+              <div class="signal-pct-row"><span>${realDist} km radius</span> <strong style="color:var(--primary-action);">${locScore}%</strong></div>
+              <div class="bar-track"><div class="bar-fill safe" style="width:${locScore}%;"></div></div>
             </div>
             <div class="signal-card">
               <div class="signal-title">Age &amp; Gender Proximity</div>
-              <div class="signal-pct-row"><span>Demographic Align</span> <strong style="color:var(--success-green);">95%</strong></div>
-              <div class="bar-track"><div class="bar-fill safe" style="width:95%;"></div></div>
+              <div class="signal-pct-row"><span>Demographic Align</span> <strong style="color:var(--success-green);">${ageScore}%</strong></div>
+              <div class="bar-track"><div class="bar-fill safe" style="width:${ageScore}%;"></div></div>
             </div>
           </div>
 
@@ -1710,9 +1767,11 @@ class SahayApp {
       return `
         <div class="card-box" style="margin-bottom:1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
-            <div>
-              <span class="status-tag blue">94% AI SUGGESTED MATCH</span>
-              <h3 style="font-size:1.2rem; font-weight:800; margin-top:0.35rem; color:var(--primary-deep);">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <span class="status-tag blue">${m.matchScore}% AI SUGGESTED MATCH</span>
+              ${m.factors?.faceScore != null ? `<span class="status-tag green">🤖 Face: ${m.factors.faceScore}% (Dist: ${m.factors.faceDistance})</span>` : '<span class="status-tag yellow">📷 No Face Vector</span>'}
+              <span class="status-tag neutral">📛 Name: ${m.factors?.nameScore || 90}%</span>
+              <h3 style="font-size:1.2rem; font-weight:800; margin-top:0.35rem; color:var(--primary-deep); width:100%;">
                 Human Verification Required: Missing Person vs Candidate
               </h3>
             </div>

@@ -33,6 +33,12 @@ export function validateMissingReport(data) {
     }
   }
 
+  if (data.faceDescriptor !== undefined && data.faceDescriptor !== null) {
+    if (!Array.isArray(data.faceDescriptor) || (data.faceDescriptor.length > 0 && typeof data.faceDescriptor[0] !== 'number')) {
+      errors.push('faceDescriptor must be an array of numbers');
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors
@@ -97,6 +103,12 @@ export function validateSurvivor(data) {
     const ageNum = Number(data.age);
     if (isNaN(ageNum) || ageNum < 0 || ageNum > 125) {
       errors.push('Age must be between 0 and 125');
+    }
+  }
+
+  if (data.faceDescriptor !== undefined && data.faceDescriptor !== null) {
+    if (!Array.isArray(data.faceDescriptor) || (data.faceDescriptor.length > 0 && typeof data.faceDescriptor[0] !== 'number')) {
+      errors.push('faceDescriptor must be an array of numbers');
     }
   }
 

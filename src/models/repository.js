@@ -129,6 +129,19 @@ export class Repository {
       this.camps.set(camp.id, camp);
     }
 
+    // Helper to generate normalized 128-D face embeddings for seed records
+    const generateSampleVector = (seed = 1, variance = 0) => {
+      const vec = [];
+      let norm = 0;
+      for (let i = 0; i < 128; i++) {
+        const val = Math.sin(seed * (i + 1)) * Math.cos((seed + 3) * (i + 2)) + variance * Math.sin(i * 99);
+        vec.push(val);
+        norm += val * val;
+      }
+      const magnitude = Math.sqrt(norm) || 1;
+      return vec.map((v) => Math.round((v / magnitude) * 10000) / 10000);
+    };
+
     // 2. Seed Sheltered Survivors currently registered at camps
     const seedSurvivors = [
       {
@@ -138,6 +151,7 @@ export class Repository {
         age: 36,
         gender: 'Male',
         photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(42, 0.0),
         physicalCondition: 'Minor leg scrapes, stable and receiving care',
         checkinTime: new Date(Date.now() - 14 * 3600000).toISOString(),
         originVillage: 'Bilasipara East Ward 2',
@@ -151,6 +165,7 @@ export class Repository {
         age: 28,
         gender: 'Female',
         photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(17, 0.0),
         physicalCondition: 'Healthy, staying with infant child',
         checkinTime: new Date(Date.now() - 20 * 3600000).toISOString(),
         originVillage: 'Palashbari riverside',
@@ -164,6 +179,7 @@ export class Repository {
         age: 44,
         gender: 'Male',
         photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(73, 0.0),
         physicalCondition: 'Mild fever, treated at camp medical desk',
         checkinTime: new Date(Date.now() - 8 * 3600000).toISOString(),
         originVillage: 'Udharbond Sector 3',
@@ -177,6 +193,7 @@ export class Repository {
         age: 19,
         gender: 'Female',
         photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(88, 0.0),
         physicalCondition: 'Safe and unharmed',
         checkinTime: new Date(Date.now() - 10 * 3600000).toISOString(),
         originVillage: 'Howly Bazar',
@@ -190,6 +207,7 @@ export class Repository {
         age: 52,
         gender: 'Male',
         photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(95, 0.0),
         physicalCondition: 'Diabetic, insulin provided by camp doctor',
         checkinTime: new Date(Date.now() - 5 * 3600000).toISOString(),
         originVillage: 'Jamugurihat',
@@ -210,6 +228,7 @@ export class Repository {
         age: 35,
         gender: 'Male',
         photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(42, 0.04), // Matches SURV-001 (distance ~0.20)
         lastSeenLocation: 'Bilasipara River Bank, Dhubri',
         lastSeenLat: 26.0400,
         lastSeenLng: 89.9900,
@@ -229,6 +248,7 @@ export class Repository {
         age: 28,
         gender: 'Female',
         photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(17, 0.05), // Matches SURV-002 (distance ~0.22)
         lastSeenLocation: 'Palashbari Ferry Ghat, Kamrup',
         lastSeenLat: 26.1200,
         lastSeenLng: 91.7400,
@@ -248,6 +268,7 @@ export class Repository {
         age: 45,
         gender: 'Male',
         photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        faceDescriptor: generateSampleVector(73, 0.06), // Matches SURV-003 (distance ~0.25)
         lastSeenLocation: 'Udharbond Bus Stand, Cachar',
         lastSeenLat: 24.8400,
         lastSeenLng: 92.7900,
@@ -267,17 +288,18 @@ export class Repository {
         age: 22,
         gender: 'Male',
         photoUrl: '',
+        faceDescriptor: null, // No photo, pure deterministic text matching
         lastSeenLocation: 'Kaziranga Southern Ridge',
         lastSeenLat: 26.5800,
         lastSeenLng: 93.1700,
         status: 'MISSING',
         sourceType: 'COMMUNITY_VOLUNTEER',
         reporterName: 'Forest Relief Post',
-        reporterContact: '+91-94000-11122',
-        medicalUrgency: 'MEDIUM',
-        notes: 'Last seen helping cattle relocation team.',
+        reporterContact: '+91-98765-00112',
+        medicalUrgency: 'LOW',
+        notes: 'Local wildlife guide separated during rescue operations.',
         hasPhoto: false,
-        witnessCorroborations: 0,
+        witnessCorroborations: 1,
         createdAt: new Date(Date.now() - 6 * 3600000).toISOString()
       }
     ];
@@ -420,6 +442,10 @@ export class Repository {
       medicalUrgency: reportData.medicalUrgency || 'MEDIUM',
       notes: reportData.notes || '',
       hasPhoto: Boolean(reportData.photoUrl),
+      faceDescriptor: Array.isArray(reportData.faceDescriptor) && reportData.faceDescriptor.length === 128
+        ? reportData.faceDescriptor.map(Number)
+        : null,
+      hasFaceVector: Array.isArray(reportData.faceDescriptor) && reportData.faceDescriptor.length === 128,
       witnessCorroborations: Number(reportData.witnessCorroborations || 0),
       createdAt: new Date().toISOString()
     };
@@ -469,6 +495,10 @@ export class Repository {
       age: survivorData.age ? Number(survivorData.age) : null,
       gender: survivorData.gender || 'Unknown',
       photoUrl: survivorData.photoUrl || '',
+      faceDescriptor: Array.isArray(survivorData.faceDescriptor) && survivorData.faceDescriptor.length === 128
+        ? survivorData.faceDescriptor.map(Number)
+        : null,
+      hasFaceVector: Array.isArray(survivorData.faceDescriptor) && survivorData.faceDescriptor.length === 128,
       physicalCondition: survivorData.physicalCondition || 'Stable',
       checkinTime: new Date().toISOString(),
       originVillage: survivorData.originVillage || 'Disaster Zone',

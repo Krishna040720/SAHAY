@@ -176,6 +176,35 @@ export function calculateTrustScore(report) {
 }
 
 /**
+ * Calculates Euclidean distance between two numerical embedding vectors (e.g. 128-D face descriptors).
+ */
+export function euclideanDistance(v1, v2) {
+  if (!v1 || !v2) return null;
+  const arr1 = Array.isArray(v1) ? v1 : (v1.buffer ? Array.from(v1) : null);
+  const arr2 = Array.isArray(v2) ? v2 : (v2.buffer ? Array.from(v2) : null);
+  if (!arr1 || !arr2 || arr1.length !== arr2.length || arr1.length === 0) return null;
+
+  let sum = 0;
+  for (let i = 0; i < arr1.length; i++) {
+    const diff = Number(arr1[i]) - Number(arr2[i]);
+    sum += diff * diff;
+  }
+  return Math.sqrt(sum);
+}
+
+/**
+ * Converts Euclidean distance between 128-D face embeddings into a normalized similarity score (0.0 to 1.0).
+ * Distance <= 0.40 -> High match (>= 85%)
+ * Distance >= 0.85 -> Distinct individuals (0%)
+ */
+export function faceSimilarity(v1, v2) {
+  const dist = euclideanDistance(v1, v2);
+  if (dist === null) return null;
+  const similarity = Math.max(0, Math.min(1, 1 - (dist / 0.85)));
+  return Math.round(similarity * 100) / 100;
+}
+
+/**
  * Composite Match Score between a Missing Person Record and a Sheltered Survivor Record.
  * Returns match score (0-100), individual sub-scores, and matched criteria summary.
  */
@@ -201,7 +230,7 @@ export function compareMissingWithSurvivor(missing, survivor, camp = null) {
     return {
       matchScore: 0,
       confidence: 'LOW',
-      factors: { nameScore: Math.round(bestNameScore * 100), genderScore: 0, ageScore: 0, locationScore: 0 },
+      factors: { nameScore: Math.round(bestNameScore * 100), genderScore: 0, ageScore: 0, locationScore: 0, faceScore: null, faceMatchStatus: 'NO_FACE_DATA' },
       isCandidate: false,
       reason: 'Gender mismatch'
     };
@@ -228,14 +257,53 @@ export function compareMissingWithSurvivor(missing, survivor, camp = null) {
     }
   }
 
-  // 5. Composite Weighted Calculation
-  // Weights: Name (50%), Age (20%), Location (20%), Gender (10%)
-  const composite = (
-    bestNameScore * 0.50 +
-    ageScore * 0.20 +
-    locationScore * 0.20 +
-    genderScore * 0.10
-  );
+  // 5. Face Descriptor Embedding Similarity (face-api.js 128-D Vector)
+  let faceScore = null;
+  let faceDistance = null;
+  let faceMatchStatus = 'NO_FACE_DATA';
+
+  const hasMissingFace = Array.isArray(missing.faceDescriptor) && missing.faceDescriptor.length === 128;
+  const hasSurvivorFace = Array.isArray(survivor.faceDescriptor) && survivor.faceDescriptor.length === 128;
+
+  if (hasMissingFace && hasSurvivorFace) {
+    faceDistance = euclideanDistance(missing.faceDescriptor, survivor.faceDescriptor);
+    faceScore = faceSimilarity(missing.faceDescriptor, survivor.faceDescriptor);
+
+    if (faceScore >= 0.70) {
+      faceMatchStatus = 'CONFIRMED_FACE_MATCH';
+    } else if (faceScore >= 0.45) {
+      faceMatchStatus = 'PROBABLE_FACE_MATCH';
+    } else {
+      faceMatchStatus = 'DISTINCT_FACES';
+    }
+  } else if (hasMissingFace || hasSurvivorFace) {
+    faceMatchStatus = 'SINGLE_FACE_ONLY';
+  } else {
+    faceMatchStatus = 'NO_FACE_DATA';
+  }
+
+  // 6. Composite Weighted Calculation
+  let composite = 0;
+  if (faceScore !== null) {
+    // Multimodal weighting with Facial Biometrics:
+    // Face (40%), Name (30%), Location (15%), Age (10%), Gender (5%)
+    composite = (
+      faceScore * 0.40 +
+      bestNameScore * 0.30 +
+      locationScore * 0.15 +
+      ageScore * 0.10 +
+      genderScore * 0.05
+    );
+  } else {
+    // Deterministic fallback when face embedding is absent:
+    // Name (50%), Age (20%), Location (20%), Gender (10%)
+    composite = (
+      bestNameScore * 0.50 +
+      ageScore * 0.20 +
+      locationScore * 0.20 +
+      genderScore * 0.10
+    );
+  }
 
   const matchScore = Math.round(composite * 100);
 
@@ -253,7 +321,10 @@ export function compareMissingWithSurvivor(missing, survivor, camp = null) {
       nameScore: Math.round(bestNameScore * 100),
       ageScore: Math.round(ageScore * 100),
       locationScore: Math.round(locationScore * 100),
-      genderScore: Math.round(genderScore * 100)
+      genderScore: Math.round(genderScore * 100),
+      faceScore: faceScore !== null ? Math.round(faceScore * 100) : null,
+      faceDistance: faceDistance !== null ? Math.round(faceDistance * 1000) / 1000 : null,
+      faceMatchStatus
     },
     isCandidate
   };

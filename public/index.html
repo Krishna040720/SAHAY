@@ -17,6 +17,9 @@
   <!-- FIX #2: defer added so this script no longer blocks HTML parsing while it downloads from unpkg -->
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+  <!-- Client-side Face Recognition Library (face-api.js) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+
   <!-- FIX #1: absolute path so this still resolves correctly when index.html is served
        via the SPA fallback for a non-root path like /camps or /missing -->
   <link rel="stylesheet" href="/css/style.css">
@@ -878,8 +881,9 @@
 
           <!-- Photo Picker: Click Photo vs Choose from Gallery -->
           <div class="form-field">
-            <label>Person Photo (Optional)</label>
+            <label>Person Photo (Optional &bull; Supports AI Face Recognition)</label>
             <input type="hidden" name="photoUrl" id="report-photo-data">
+            <input type="hidden" name="faceDescriptor" id="report-face-descriptor">
 
             <div class="photo-picker-actions" id="report-photo-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
               <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-open" data-target="report">
@@ -909,7 +913,8 @@
               <img id="report-preview-img" src="" alt="Photo preview">
               <div style="flex:1;">
                 <div style="font-weight:700; font-size:0.85rem; color:var(--success-green);">✓ Photo attached</div>
-                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-photo-remove" data-target="report" style="margin-top:0.25rem;">
+                <div id="report-face-status" style="font-size:0.78rem; margin-top:0.35rem; color:var(--text-muted); font-weight:600;"></div>
+                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-photo-remove" data-target="report" style="margin-top:0.35rem;">
                   ✕ Remove Photo
                 </button>
               </div>
@@ -972,8 +977,9 @@
 
           <!-- Photo Picker -->
           <div class="form-field">
-            <label>Person Photo (Optional)</label>
+            <label>Person Photo (Optional &bull; Supports AI Face Recognition)</label>
             <input type="hidden" name="photoUrl" id="survivor-photo-data">
+            <input type="hidden" name="faceDescriptor" id="survivor-face-descriptor">
 
             <div class="photo-picker-actions" id="survivor-photo-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
               <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-camera-open" data-target="survivor">
@@ -1003,7 +1009,8 @@
               <img id="survivor-preview-img" src="" alt="Photo preview">
               <div style="flex:1;">
                 <div style="font-weight:700; font-size:0.85rem; color:var(--success-green);">✓ Photo attached</div>
-                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-photo-remove" data-target="survivor" style="margin-top:0.25rem;">
+                <div id="survivor-face-status" style="font-size:0.78rem; margin-top:0.35rem; color:var(--text-muted); font-weight:600;"></div>
+                <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm btn-photo-remove" data-target="survivor" style="margin-top:0.35rem;">
                   ✕ Remove Photo
                 </button>
               </div>
