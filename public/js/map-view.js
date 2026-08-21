@@ -54,6 +54,10 @@ export class MapVisualizer {
     this.renderCamps();
   }
 
+  updateCamps(camps) {
+    this.setCamps(camps);
+  }
+
   renderCamps() {
     if (!this.markersGroup) return;
     this.markersGroup.clearLayers();

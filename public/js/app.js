@@ -677,13 +677,14 @@ class SahayApp {
           this.state.camps[idx] = updatedCamp;
         }
 
-        // Re-render all views
+        // Re-render all views cleanly
         this.renderCampAdminView();
         this.renderCampDetailsView();
         this.renderCampsList();
-        this.renderHomeCamps();
-        this.renderStats();
-        this.map?.updateCamps(this.state.camps);
+        this.renderHomeCampsSummary();
+        this.updateSitrepCounters();
+        this.map?.setCamps(this.state.camps);
+        this.handleLocator(this.state.userGps?.lat || 26.15, this.state.userGps?.lng || 91.75, 'Current GPS');
 
         const freeBeds = Math.max(0, updatedCamp.capacity - updatedCamp.occupancy);
         showToast(`✓ Sitrep Saved! "${updatedCamp.name}" updated (${freeBeds} free beds, Med: ${updatedCamp.resources.medical}%, Food: ${updatedCamp.resources.food}%)`, 'success', 6000);
@@ -1936,6 +1937,14 @@ class SahayApp {
         </div>
       `;
     }).join('');
+  }
+
+  renderHomeCamps() {
+    this.renderHomeCampsSummary();
+  }
+
+  renderStats() {
+    this.updateSitrepCounters();
   }
 }
 
