@@ -365,15 +365,29 @@ export class Repository {
     const camp = this.camps.get(id);
     if (!camp) return null;
 
-    if (updates.occupancy !== undefined) camp.occupancy = Number(updates.occupancy);
-    if (updates.capacity !== undefined) camp.capacity = Number(updates.capacity);
-    if (updates.powerStatus) camp.powerStatus = updates.powerStatus;
+    if (updates.occupancy !== undefined && updates.occupancy !== null) camp.occupancy = Math.max(0, Number(updates.occupancy));
+    if (updates.capacity !== undefined && updates.capacity !== null) camp.capacity = Math.max(1, Number(updates.capacity));
+    if (updates.powerStatus) camp.powerStatus = String(updates.powerStatus);
+    if (updates.contactName) camp.contactName = String(updates.contactName);
+    if (updates.contactPhone) camp.contactPhone = String(updates.contactPhone);
 
-    if (updates.resources) {
-      camp.resources = { ...camp.resources, ...updates.resources };
+    if (!camp.resources) {
+      camp.resources = { water: 50, food: 50, medical: 50, blankets: 50 };
     }
 
-    this.logActivity('CAMP_UPDATED', `Camp status updated: ${camp.name}`, `Current occupancy: ${camp.occupancy}/${camp.capacity}`, 'LIVE_WEB');
+    if (updates.resources && typeof updates.resources === 'object') {
+      if (updates.resources.water !== undefined) camp.resources.water = Math.max(0, Math.min(100, Number(updates.resources.water)));
+      if (updates.resources.food !== undefined) camp.resources.food = Math.max(0, Math.min(100, Number(updates.resources.food)));
+      if (updates.resources.medical !== undefined) camp.resources.medical = Math.max(0, Math.min(100, Number(updates.resources.medical)));
+      if (updates.resources.blankets !== undefined) camp.resources.blankets = Math.max(0, Math.min(100, Number(updates.resources.blankets)));
+    }
+
+    if (updates.water !== undefined) camp.resources.water = Math.max(0, Math.min(100, Number(updates.water)));
+    if (updates.food !== undefined) camp.resources.food = Math.max(0, Math.min(100, Number(updates.food)));
+    if (updates.medical !== undefined) camp.resources.medical = Math.max(0, Math.min(100, Number(updates.medical)));
+    if (updates.blankets !== undefined) camp.resources.blankets = Math.max(0, Math.min(100, Number(updates.blankets)));
+
+    this.logActivity('CAMP_UPDATED', `Camp Sitrep updated: ${camp.name}`, `Occupancy: ${camp.occupancy}/${camp.capacity} beds (${Math.max(0, camp.capacity - camp.occupancy)} free), Water: ${camp.resources.water}%, Food: ${camp.resources.food}%, Med: ${camp.resources.medical}%`, 'LIVE_WEB');
     return camp;
   }
 

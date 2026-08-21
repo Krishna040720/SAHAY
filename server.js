@@ -105,15 +105,22 @@ function parseJsonBody(req) {
   });
 }
 
-// Start standalone server
-const PORT = Number(process.env.PORT) || 3000;
-const HOST = '0.0.0.0';
-const server = createServer();
+// Start standalone server when executed directly as main script
+const isMain = process.argv[1] && (
+  process.argv[1].endsWith('server.js') ||
+  process.argv[1] === fileURLToPath(import.meta.url)
+);
 
-server.listen(PORT, HOST, () => {
-  console.log(`\n==========================================================`);
-  console.log(`🚀 SAHAY Disaster Relief & Coordination Platform`);
-  console.log(`🌐 Live Dashboard: http://${HOST}:${PORT}`);
-  console.log(`📡 REST API Health: http://${HOST}:${PORT}/api/health`);
-  console.log(`==========================================================\n`);
-});
+if (isMain && process.env.NODE_ENV !== 'test') {
+  const PORT = Number(process.env.PORT) || 3000;
+  const HOST = '0.0.0.0';
+  const server = createServer();
+
+  server.listen(PORT, HOST, () => {
+    console.log(`\n==========================================================`);
+    console.log(`🚀 SAHAY Disaster Relief & Coordination Platform`);
+    console.log(`🌐 Live Dashboard: http://${HOST}:${PORT}`);
+    console.log(`📡 REST API Health: http://${HOST}:${PORT}/api/health`);
+    console.log(`==========================================================\n`);
+  });
+}

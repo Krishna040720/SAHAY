@@ -595,18 +595,101 @@ class SahayApp {
     const waterRange = document.getElementById('range-water');
     const waterLbl = document.getElementById('lbl-water-val');
     waterRange?.addEventListener('input', (e) => {
-      if (waterLbl) waterLbl.innerHTML = `<strong>${e.target.value}%</strong> (${e.target.value < 40 ? 'Critical Low' : 'Adequate'})`;
+      const val = Number(e.target.value);
+      if (waterLbl) waterLbl.innerHTML = `<strong>${val}%</strong> (${val < 30 ? 'Critical Low' : val < 60 ? 'Moderate' : 'Adequate'})`;
     });
 
     const foodRange = document.getElementById('range-food');
     const foodLbl = document.getElementById('lbl-food-val');
     foodRange?.addEventListener('input', (e) => {
-      const days = (e.target.value / 20).toFixed(1);
-      if (foodLbl) foodLbl.innerHTML = `<strong>${e.target.value}%</strong> (${days} Days Buffer)`;
+      const val = Number(e.target.value);
+      const days = (val / 20).toFixed(1);
+      if (foodLbl) foodLbl.innerHTML = `<strong>${val}%</strong> (${val === 0 ? 'Depleted' : days + ' Days Buffer'})`;
     });
 
-    document.getElementById('btn-save-camp-resources')?.addEventListener('click', () => {
-      showToast('✓ Camp Sitrep updated & broadcasted to Command Center', 'success');
+    const medRange = document.getElementById('range-medical');
+    const medLbl = document.getElementById('lbl-medical-val');
+    medRange?.addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      if (medLbl) medLbl.innerHTML = `<strong>${val}%</strong> (${val === 0 ? 'Depleted' : val < 35 ? 'Critical Low' : val < 65 ? 'Limited' : 'Stocked'})`;
+    });
+
+    const blanketsRange = document.getElementById('range-blankets');
+    const blanketsLbl = document.getElementById('lbl-blankets-val');
+    blanketsRange?.addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      if (blanketsLbl) blanketsLbl.innerHTML = `<strong>${val}%</strong> (${val === 0 ? 'Depleted' : val < 40 ? 'Shortage' : 'Adequate'})`;
+    });
+
+    // Quick Bed Adjustment Buttons
+    document.getElementById('admin-btn-set-full')?.addEventListener('click', () => {
+      const capInput = document.getElementById('admin-input-capacity');
+      const occInput = document.getElementById('admin-input-occupancy');
+      if (capInput && occInput) {
+        occInput.value = capInput.value;
+        showToast('Set occupancy to capacity (0 vacant beds)', 'info');
+      }
+    });
+
+    document.getElementById('admin-btn-add-beds')?.addEventListener('click', () => {
+      const capInput = document.getElementById('admin-input-capacity');
+      if (capInput) {
+        capInput.value = Number(capInput.value || 100) + 50;
+        showToast('Expanded camp capacity by +50 beds', 'info');
+      }
+    });
+
+    // Save Live Camp Sitrep Button
+    document.getElementById('btn-save-camp-resources')?.addEventListener('click', async () => {
+      const camp = this.state.camps.find((c) => c.id === this.state.selectedAdminCampId) || this.state.camps[0];
+      if (!camp) {
+        showToast('No active camp selected to update', 'error');
+        return;
+      }
+
+      const occupancyVal = document.getElementById('admin-input-occupancy')?.value;
+      const capacityVal = document.getElementById('admin-input-capacity')?.value;
+      const waterVal = document.getElementById('range-water')?.value;
+      const foodVal = document.getElementById('range-food')?.value;
+      const medVal = document.getElementById('range-medical')?.value;
+      const blanketsVal = document.getElementById('range-blankets')?.value;
+      const powerVal = document.getElementById('admin-select-power')?.value;
+
+      const payload = {
+        occupancy: occupancyVal !== undefined && occupancyVal !== '' ? Number(occupancyVal) : camp.occupancy,
+        capacity: capacityVal !== undefined && capacityVal !== '' ? Number(capacityVal) : camp.capacity,
+        powerStatus: powerVal || camp.powerStatus,
+        resources: {
+          water: waterVal !== undefined ? Number(waterVal) : (camp.resources?.water ?? 50),
+          food: foodVal !== undefined ? Number(foodVal) : (camp.resources?.food ?? 50),
+          medical: medVal !== undefined ? Number(medVal) : (camp.resources?.medical ?? 50),
+          blankets: blanketsVal !== undefined ? Number(blanketsVal) : (camp.resources?.blankets ?? 50)
+        }
+      };
+
+      try {
+        const res = await api.updateCamp(camp.id, payload);
+        const updatedCamp = res.camp || { ...camp, ...payload };
+
+        // Update local state camp object
+        const idx = this.state.camps.findIndex((c) => c.id === camp.id);
+        if (idx !== -1) {
+          this.state.camps[idx] = updatedCamp;
+        }
+
+        // Re-render all views
+        this.renderCampAdminView();
+        this.renderCampDetailsView();
+        this.renderCampsList();
+        this.renderHomeCamps();
+        this.renderStats();
+        this.map?.updateCamps(this.state.camps);
+
+        const freeBeds = Math.max(0, updatedCamp.capacity - updatedCamp.occupancy);
+        showToast(`✓ Sitrep Saved! "${updatedCamp.name}" updated (${freeBeds} free beds, Med: ${updatedCamp.resources.medical}%, Food: ${updatedCamp.resources.food}%)`, 'success', 6000);
+      } catch (err) {
+        showToast(`Update failed: ${err.message}`, 'error', 5000);
+      }
     });
 
     document.getElementById('btn-request-logistics-transfer')?.addEventListener('click', () => {
@@ -1270,23 +1353,148 @@ class SahayApp {
     const select = document.getElementById('select-active-camp-detail');
     if (select) {
       select.innerHTML = this.state.camps.map((c) => `
-        <option value="${c.id}" ${c.id === camp.id ? 'selected' : ''}>${c.name}</option>
+        <option value="${c.id}" ${c.id === camp.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>
       `).join('');
+      select.onchange = (e) => {
+        this.state.selectedCampId = e.target.value;
+        this.renderCampDetailsView();
+      };
     }
 
     const nameEl = document.getElementById('detail-camp-name');
     const locEl = document.getElementById('detail-camp-loc');
+    const bedsBox = document.getElementById('detail-camp-beds-box');
     const bedsEl = document.getElementById('detail-camp-beds');
+    const bedsSub = document.getElementById('detail-camp-beds-sub');
     const dirBtn = document.getElementById('detail-btn-directions');
     const contactEl = document.getElementById('detail-camp-contact');
     const amenitiesBox = document.getElementById('detail-amenities-tags');
 
+    const foodText = document.getElementById('detail-food-text');
+    const foodBar = document.getElementById('detail-food-bar');
+    const foodSub = document.getElementById('detail-food-sub');
+
+    const medText = document.getElementById('detail-med-text');
+    const medBar = document.getElementById('detail-med-bar');
+    const medSub = document.getElementById('detail-med-sub');
+
+    const waterText = document.getElementById('detail-water-text');
+    const waterBar = document.getElementById('detail-water-bar');
+    const waterSub = document.getElementById('detail-water-sub');
+
+    const blanketsText = document.getElementById('detail-blankets-text');
+    const blanketsBar = document.getElementById('detail-blankets-bar');
+    const powerSub = document.getElementById('detail-power-sub');
+
     const dist = this.state.userGps ? haversineDistance(this.state.userGps.lat, this.state.userGps.lng, camp.latitude, camp.longitude) : 1.2;
     const vacancy = Math.max(0, camp.capacity - camp.occupancy);
+    const water = camp.resources?.water ?? 50;
+    const food = camp.resources?.food ?? 50;
+    const medical = camp.resources?.medical ?? 50;
+    const blankets = camp.resources?.blankets ?? 50;
 
     if (nameEl) nameEl.textContent = camp.name;
     if (locEl) locEl.innerHTML = `📍 ${escapeHtml(camp.address || camp.district)} &bull; Distance: <strong>${dist} km from you</strong>`;
-    if (bedsEl) bedsEl.textContent = `${vacancy} beds available (Capacity: ${camp.capacity})`;
+
+    // Dynamic Beds Banner
+    if (bedsEl) {
+      if (vacancy === 0) {
+        if (bedsBox) {
+          bedsBox.style.background = '#FEF2F2';
+          bedsBox.style.borderColor = '#FECACA';
+        }
+        bedsEl.innerHTML = `<span style="color:#DC2626; font-weight:900;">🔴 0 beds available (CAMP FULL - ${camp.occupancy}/${camp.capacity})</span>`;
+        if (bedsSub) bedsSub.innerHTML = `<span style="color:#991B1B;">Verified &bull; Live Sitrep: Maximum shelter capacity reached</span>`;
+      } else if (vacancy < camp.capacity * 0.15) {
+        if (bedsBox) {
+          bedsBox.style.background = '#FFFBEB';
+          bedsBox.style.borderColor = '#FDE68A';
+        }
+        bedsEl.innerHTML = `<span style="color:#D97706; font-weight:900;">🟡 ${vacancy} beds available (Near Capacity: ${camp.capacity})</span>`;
+        if (bedsSub) bedsSub.innerHTML = `<span style="color:#B45309;">Verified &bull; Live &bull; Updated just now</span>`;
+      } else {
+        if (bedsBox) {
+          bedsBox.style.background = '#F0FDF4';
+          bedsBox.style.borderColor = '#BBF7D0';
+        }
+        bedsEl.innerHTML = `<span style="color:#166534; font-weight:900;">🟢 ${vacancy} beds available (Capacity: ${camp.capacity})</span>`;
+        if (bedsSub) bedsSub.innerHTML = `<span style="color:#15803D;">Verified &bull; Live &bull; Updated just now</span>`;
+      }
+    }
+
+    // Dynamic Food Pillar
+    const foodDays = (food / 20).toFixed(1);
+    if (foodText) {
+      if (food === 0) {
+        foodText.innerHTML = `<span style="color:#DC2626;">🔴 Food Stock: DEPLETED (0.0 D)</span>`;
+      } else if (food < 35) {
+        foodText.innerHTML = `<span style="color:#D97706;">🟡 Food Stock: Critical Low (${foodDays} Days Buffer)</span>`;
+      } else {
+        foodText.innerHTML = `Food Stock: ${foodDays} Days Buffer (${food}%)`;
+      }
+    }
+    if (foodBar) {
+      foodBar.style.width = `${food}%`;
+      foodBar.className = `bar-fill ${food === 0 ? 'danger' : food < 35 ? 'warn' : 'safe'}`;
+    }
+    if (foodSub) {
+      foodSub.textContent = food === 0 ? '⚠️ Kitchen supplies exhausted • Immediate convoy requisitioned' : food < 35 ? 'Rationing protocols active in community kitchen' : 'Community Kitchen running 3 hot meals/day';
+    }
+
+    // Dynamic Medical Pillar
+    if (medText) {
+      if (medical === 0) {
+        medText.innerHTML = `<span style="color:#DC2626;">🔴 Medical Stock: DEPLETED (0%)</span>`;
+      } else if (medical < 35) {
+        medText.innerHTML = `<span style="color:#D97706;">🟡 Medical: Critical Low (${medical}%)</span>`;
+      } else {
+        medText.innerHTML = `Medical: Available (${medical}%)`;
+      }
+    }
+    if (medBar) {
+      medBar.style.width = `${medical}%`;
+      medBar.className = `bar-fill ${medical === 0 ? 'danger' : medical < 35 ? 'warn' : 'safe'}`;
+    }
+    if (medSub) {
+      medSub.textContent = medical === 0 ? '⚠️ First aid and trauma kits depleted • Field triage alerted' : medical < 35 ? 'Emergency first aid only • Specialist meds low' : '24/7 Medical Post • Paramedics and doctor on site';
+    }
+
+    // Dynamic Water Pillar
+    if (waterText) {
+      if (water === 0) {
+        waterText.innerHTML = `<span style="color:#DC2626;">🔴 Water Reserves: DEPLETED (0%)</span>`;
+      } else if (water < 35) {
+        waterText.innerHTML = `<span style="color:#D97706;">🟡 Water Reserves: LOW (${water}%)</span>`;
+      } else {
+        waterText.innerHTML = `Water Reserves: ${water}% Available`;
+      }
+    }
+    if (waterBar) {
+      waterBar.style.width = `${water}%`;
+      waterBar.className = `bar-fill ${water === 0 ? 'danger' : water < 35 ? 'warn' : 'safe'}`;
+    }
+    if (waterSub) {
+      waterSub.textContent = water === 0 ? '⚠️ Water supply zero • Emergency water tanker requested' : water < 35 ? 'Rationed drinking water distribution active' : 'Clean drinking water plant operational';
+    }
+
+    // Dynamic Blankets Pillar
+    if (blanketsText) {
+      if (blankets === 0) {
+        blanketsText.innerHTML = `<span style="color:#DC2626;">🔴 Bedding: DEPLETED (0%)</span>`;
+      } else if (blankets < 40) {
+        blanketsText.innerHTML = `<span style="color:#D97706;">🟡 Blankets: Shortage (${blankets}%)</span>`;
+      } else {
+        blanketsText.innerHTML = `Blankets & Bedding: ${blankets}% Adequate`;
+      }
+    }
+    if (blanketsBar) {
+      blanketsBar.style.width = `${blankets}%`;
+      blanketsBar.className = `bar-fill ${blankets === 0 ? 'danger' : blankets < 40 ? 'warn' : 'safe'}`;
+    }
+    if (powerSub) {
+      powerSub.textContent = `Power Supply: ${camp.powerStatus || 'Generator Active'}`;
+    }
+
     if (dirBtn) dirBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${camp.latitude},${camp.longitude}`;
     if (contactEl) contactEl.textContent = `${camp.contactName || 'Relief Lead'} (${camp.contactPhone || '+91-1800-SAHAY'})`;
 
@@ -1305,20 +1513,79 @@ class SahayApp {
     const select = document.getElementById('select-admin-camp-switch');
     if (select) {
       select.innerHTML = this.state.camps.map((c) => `
-        <option value="${c.id}" ${c.id === camp.id ? 'selected' : ''}>${c.name}</option>
+        <option value="${c.id}" ${c.id === camp.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>
       `).join('');
     }
 
     const titleEl = document.getElementById('admin-camp-title');
     const peopleEl = document.getElementById('admin-people-count');
     const bedsEl = document.getElementById('admin-beds-count');
+    const medStatusEl = document.getElementById('admin-med-status');
+    const foodStatusEl = document.getElementById('admin-food-status');
+
+    const occInput = document.getElementById('admin-input-occupancy');
+    const capInput = document.getElementById('admin-input-capacity');
+    const powerSelect = document.getElementById('admin-select-power');
+
+    const waterRange = document.getElementById('range-water');
+    const waterLbl = document.getElementById('lbl-water-val');
+
+    const foodRange = document.getElementById('range-food');
+    const foodLbl = document.getElementById('lbl-food-val');
+
+    const medRange = document.getElementById('range-medical');
+    const medLbl = document.getElementById('lbl-medical-val');
+
+    const blanketsRange = document.getElementById('range-blankets');
+    const blanketsLbl = document.getElementById('lbl-blankets-val');
+
+    const water = camp.resources?.water ?? 50;
+    const food = camp.resources?.food ?? 50;
+    const medical = camp.resources?.medical ?? 50;
+    const blankets = camp.resources?.blankets ?? 50;
+    const free = Math.max(0, camp.capacity - camp.occupancy);
+    const ratio = Math.round((camp.occupancy / camp.capacity) * 100);
 
     if (titleEl) titleEl.textContent = camp.name;
     if (peopleEl) peopleEl.textContent = camp.occupancy;
     if (bedsEl) {
-      const free = Math.max(0, camp.capacity - camp.occupancy);
-      bedsEl.textContent = `${free} Free`;
+      bedsEl.textContent = `${free} Free (${ratio}% Cap)`;
+      bedsEl.style.color = free === 0 ? 'var(--emergency-red)' : 'var(--success-green)';
     }
+
+    if (medStatusEl) {
+      if (medical === 0) {
+        medStatusEl.textContent = 'DEPLETED (0%)';
+        medStatusEl.style.color = 'var(--emergency-red)';
+      } else if (medical < 35) {
+        medStatusEl.textContent = `LOW (${medical}%)`;
+        medStatusEl.style.color = 'var(--emergency-red)';
+      } else {
+        medStatusEl.textContent = `STABLE (${medical}%)`;
+        medStatusEl.style.color = 'var(--success-green)';
+      }
+    }
+
+    if (foodStatusEl) {
+      foodStatusEl.textContent = `${(food / 20).toFixed(1)} D`;
+      foodStatusEl.style.color = food === 0 ? 'var(--emergency-red)' : food < 35 ? 'var(--warning-orange)' : 'var(--text-main)';
+    }
+
+    if (occInput) occInput.value = camp.occupancy;
+    if (capInput) capInput.value = camp.capacity;
+    if (powerSelect) powerSelect.value = camp.powerStatus || 'Generator Active';
+
+    if (waterRange) waterRange.value = water;
+    if (waterLbl) waterLbl.innerHTML = `<strong>${water}%</strong> (${water === 0 ? 'Empty' : water < 35 ? 'Critical Low' : 'Adequate'})`;
+
+    if (foodRange) foodRange.value = food;
+    if (foodLbl) foodLbl.innerHTML = `<strong>${food}%</strong> (${food === 0 ? 'Depleted' : (food / 20).toFixed(1) + ' Days Buffer'})`;
+
+    if (medRange) medRange.value = medical;
+    if (medLbl) medLbl.innerHTML = `<strong>${medical}%</strong> (${medical === 0 ? 'Depleted' : medical < 35 ? 'Critical Low' : medical < 65 ? 'Limited' : 'Stocked'})`;
+
+    if (blanketsRange) blanketsRange.value = blankets;
+    if (blanketsLbl) blanketsLbl.innerHTML = `<strong>${blankets}%</strong> (${blankets === 0 ? 'Depleted' : blankets < 40 ? 'Shortage' : 'Adequate'})`;
   }
 
   renderAiMatchesDetailed() {

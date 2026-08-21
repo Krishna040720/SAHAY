@@ -422,10 +422,10 @@
           </select>
         </div>
 
-        <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:1rem; border-radius:var(--radius-md); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <div id="detail-camp-beds-box" style="background:#F0FDF4; border:1px solid #BBF7D0; padding:1rem; border-radius:var(--radius-md); margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
           <div>
             <div style="font-size:1.3rem; font-weight:900; color:#166534;" id="detail-camp-beds">42 beds available</div>
-            <div style="font-size:0.8rem; color:#15803D;">Verified &bull; Live &bull; Updated 4 mins ago</div>
+            <div style="font-size:0.8rem; color:#15803D;" id="detail-camp-beds-sub">Verified &bull; Live &bull; Updated just now</div>
           </div>
           <div style="display:flex; gap:0.5rem;">
             <a href="#" id="detail-btn-directions" target="_blank" class="btn-ui btn-ui-primary">
@@ -437,6 +437,7 @@
           </div>
         </div>
 
+        <!-- 4 Dynamic Supply Pillars -->
         <div class="split-grid-2" style="margin-bottom:1.5rem;">
           <div class="gauge-card">
             <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:0.5rem;">🍲 Food &amp; Ration Status</h4>
@@ -444,16 +445,34 @@
             <div class="bar-track" style="margin-top:0.4rem;">
               <div class="bar-fill safe" id="detail-food-bar" style="width:75%;"></div>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Community Kitchen running 3 meals/day</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;" id="detail-food-sub">Community Kitchen running 3 meals/day</div>
           </div>
 
           <div class="gauge-card">
             <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:0.5rem;">🩺 Medical &amp; Sanitation</h4>
-            <div style="font-size:1.1rem; font-weight:700; color:var(--text-main);" id="detail-med-text">24/7 First Aid &bull; Paracetamol LOW</div>
+            <div style="font-size:1.1rem; font-weight:700; color:var(--text-main);" id="detail-med-text">24/7 First Aid Available</div>
             <div class="bar-track" style="margin-top:0.4rem;">
               <div class="bar-fill warn" id="detail-med-bar" style="width:40%;"></div>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Paramedics on site &bull; Emergency ambulance ready</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;" id="detail-med-sub">Paramedics on site &bull; Emergency kits ready</div>
+          </div>
+
+          <div class="gauge-card">
+            <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:0.5rem;">💧 Clean Water Reserves</h4>
+            <div style="font-size:1.1rem; font-weight:700; color:var(--text-main);" id="detail-water-text">Water Plant: 75% Capacity</div>
+            <div class="bar-track" style="margin-top:0.4rem;">
+              <div class="bar-fill safe" id="detail-water-bar" style="width:75%;"></div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;" id="detail-water-sub">Chlorinated drinking water supply available</div>
+          </div>
+
+          <div class="gauge-card">
+            <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:0.5rem;">⚡ Power &amp; Bedding Stock</h4>
+            <div style="font-size:1.1rem; font-weight:700; color:var(--text-main);" id="detail-blankets-text">Blankets: 65% Adequate</div>
+            <div class="bar-track" style="margin-top:0.4rem;">
+              <div class="bar-fill safe" id="detail-blankets-bar" style="width:65%;"></div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;" id="detail-power-sub">Power: Generator Active</div>
           </div>
         </div>
 
@@ -568,32 +587,32 @@
         <div class="sitrep-card">
           <div class="sitrep-icon-box" style="background:#F0FDF4; color:var(--success-green);">🛏️</div>
           <div>
-            <div class="sitrep-val" id="admin-beds-count">0</div>
-            <div class="sitrep-label">Beds Free (117% Cap)</div>
+            <div class="sitrep-val" id="admin-beds-count">0 Free</div>
+            <div class="sitrep-label">Beds Vacancy</div>
           </div>
         </div>
         <div class="sitrep-card">
           <div class="sitrep-icon-box" style="background:#FEF2F2; color:var(--emergency-red);">💊</div>
           <div>
-            <div class="sitrep-val" style="color:var(--emergency-red);">LOW</div>
+            <div class="sitrep-val" id="admin-med-status" style="color:var(--emergency-red);">LOW (20%)</div>
             <div class="sitrep-label">Medicine Status</div>
           </div>
         </div>
         <div class="sitrep-card">
           <div class="sitrep-icon-box" style="background:#FFFBEB; color:var(--warning-orange);">🍲</div>
           <div>
-            <div class="sitrep-val">2.5 D</div>
+            <div class="sitrep-val" id="admin-food-status">2.5 D</div>
             <div class="sitrep-label">Food Buffer Remaining</div>
           </div>
         </div>
       </div>
 
       <!-- AI Cross-Camp Logistics Recommendation -->
-      <div class="ai-transfer-recommendation-box">
+      <div class="ai-transfer-recommendation-box" id="admin-ai-transfer-box">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
           <div>
             <strong style="color:var(--primary-deep); font-size:1.05rem;">⚡ AI Cross-Camp Resource Balancing Opportunity</strong>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;" id="admin-ai-transfer-text">
               Critical shortage detected for <strong>Pediatric Medicines &amp; Clean Water</strong>. <em>Tezpur Hub</em> and <em>Guwahati Shelter</em> currently maintain 85%+ surplus.
             </p>
           </div>
@@ -603,30 +622,94 @@
         </div>
       </div>
 
-      <!-- Resource Management Sliders -->
+      <!-- Occupancy & Bed Vacancy Controls -->
+      <div class="card-box" style="margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <h4 style="font-weight:800; font-size:1.1rem; color:var(--primary-deep); margin:0;">
+              🛏️ Live Bed Vacancy &amp; Camp Capacity Management
+            </h4>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin:0.2rem 0 0 0;">
+              Adjust sheltered count or set available beds to 0 when shelter reaches maximum capacity.
+            </p>
+          </div>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" class="btn-ui btn-ui-danger btn-ui-sm" id="admin-btn-set-full" title="Set beds to 0 (Occupancy = Capacity)">
+              🔴 Set Available Beds to 0 (FULL)
+            </button>
+            <button type="button" class="btn-ui btn-ui-secondary btn-ui-sm" id="admin-btn-add-beds" title="Add 50 Vacant Beds">
+              🟢 +50 Vacant Beds
+            </button>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field" style="margin-bottom:0;">
+            <label>Current Sheltered Survivors (Occupancy)</label>
+            <input type="number" id="admin-input-occupancy" class="form-control" min="0" placeholder="468">
+            <span style="font-size:0.72rem; color:var(--text-muted);">Persons currently accommodated at this facility.</span>
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label>Total Camp Bed Capacity</label>
+            <input type="number" id="admin-input-capacity" class="form-control" min="1" placeholder="400">
+            <span style="font-size:0.72rem; color:var(--text-muted);">Maximum shelter capacity limit.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resource Management Sliders (All 4 Pillars) -->
       <div class="card-box">
         <h4 style="font-weight:800; font-size:1.1rem; margin-bottom:1rem; color:var(--primary-deep);">
           🛠️ Live Camp Inventory Adjustment &amp; Requisition
         </h4>
-        <div class="split-grid-2">
+
+        <div class="split-grid-2" style="margin-bottom:1rem;">
           <div>
-            <label style="font-size:0.85rem; font-weight:700;">Clean Water Reserves (%)</label>
+            <label style="font-size:0.85rem; font-weight:700;">💧 Clean Water Reserves (%)</label>
             <input type="range" id="range-water" min="0" max="100" value="30" style="width:100%; margin:0.5rem 0;">
             <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
               <span>0% (Empty)</span><span id="lbl-water-val"><strong>30%</strong> (Low)</span><span>100% (Full)</span>
             </div>
           </div>
           <div>
-            <label style="font-size:0.85rem; font-weight:700;">Food Rations &amp; Grain (%)</label>
+            <label style="font-size:0.85rem; font-weight:700;">🍲 Food Rations &amp; Grain (%)</label>
             <input type="range" id="range-food" min="0" max="100" value="45" style="width:100%; margin:0.5rem 0;">
             <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
               <span>0% (Depleted)</span><span id="lbl-food-val"><strong>45%</strong> (2.5 Days)</span><span>100% (Surplus)</span>
             </div>
           </div>
         </div>
+
+        <div class="split-grid-2" style="margin-bottom:1rem;">
+          <div>
+            <label style="font-size:0.85rem; font-weight:700;">🩺 Medical Supplies &amp; First Aid Kits (%)</label>
+            <input type="range" id="range-medical" min="0" max="100" value="20" style="width:100%; margin:0.5rem 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+              <span>0% (Depleted)</span><span id="lbl-medical-val"><strong>20%</strong> (Critical Low)</span><span>100% (Stocked)</span>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:0.85rem; font-weight:700;">🛏️ Blankets &amp; Emergency Bedding (%)</label>
+            <input type="range" id="range-blankets" min="0" max="100" value="50" style="width:100%; margin:0.5rem 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
+              <span>0% (Depleted)</span><span id="lbl-blankets-val"><strong>50%</strong> (Adequate)</span><span>100% (Surplus)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field" style="margin-top:0.5rem;">
+          <label>⚡ Power &amp; Electricity Supply Status</label>
+          <select class="form-control" id="admin-select-power">
+            <option value="Generator Active">⚡ Generator Active (Diesel Backup)</option>
+            <option value="Grid Normal">🔌 Grid Normal (Main Grid Connected)</option>
+            <option value="Solar + Battery Backup">☀️ Solar + Battery Backup</option>
+            <option value="Power Outage (Critical)">🔴 Power Outage (Emergency Blackout)</option>
+          </select>
+        </div>
+
         <div style="margin-top:1.25rem; display:flex; justify-content:flex-end;">
-          <button class="btn-ui btn-ui-success btn-ui-sm" id="btn-save-camp-resources">
-            ✓ Update Camp Live Sitrep
+          <button type="button" class="btn-ui btn-ui-success btn-ui-sm" id="btn-save-camp-resources" style="font-weight:800; font-size:0.92rem; padding:0.65rem 1.4rem;">
+            ✓ Update &amp; Broadcast Camp Live Sitrep
           </button>
         </div>
       </div>
