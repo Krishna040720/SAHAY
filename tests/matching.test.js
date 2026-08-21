@@ -85,27 +85,27 @@ test('Matching Engine: Euclidean distance and 128-D Face Similarity', () => {
   const v1 = new Array(128).fill(0.1);
   const v2 = new Array(128).fill(0.1);
   assert.equal(euclideanDistance(v1, v2), 0.0, 'Identical vectors have 0 Euclidean distance');
-  assert.equal(faceSimilarity(v1, v2), 1.0, 'Identical face vectors have 1.0 similarity');
+  assert.equal(faceSimilarity(v1, v2), 100, 'Identical face vectors have 100% similarity');
 
-  // Slight variation (same person from different angle/lighting)
+  // Same/Similar face descriptors -> high face score
   const v3 = v1.map((x, i) => (i % 2 === 0 ? x + 0.02 : x - 0.02));
   const distClose = euclideanDistance(v1, v3);
   assert.ok(distClose < 0.35, `Expected close distance < 0.35, got ${distClose}`);
   const simClose = faceSimilarity(v1, v3);
-  assert.ok(simClose >= 0.70, `Expected high similarity >= 0.70, got ${simClose}`);
+  assert.ok(simClose >= 70, `Expected high similarity >= 70%, got ${simClose}`);
 
-  // Distinct vectors (different persons)
+  // Different descriptors -> lower face score (0% for distant vectors)
   const vFar = new Array(128).fill(0.9);
   const simFar = faceSimilarity(v1, vFar);
-  assert.equal(simFar, 0.0, 'Distant vectors have 0.0 face similarity');
+  assert.equal(simFar, 0, 'Distant vectors have 0% face similarity');
 
-  // Invalid vectors return null
+  // Missing or invalid descriptors return null
   assert.equal(euclideanDistance(null, v1), null);
   assert.equal(euclideanDistance(v1, [1, 2]), null);
   assert.equal(faceSimilarity(null, v1), null);
 });
 
-test('Matching Engine: Composite comparison with 128-D Face Recognition vector', () => {
+test('Matching Engine: Final score includes face (35/30/15/15/5) when both descriptors exist', () => {
   const vA1 = new Array(128).fill(0.05);
   const vA2 = vA1.map((x, i) => (i % 4 === 0 ? x + 0.01 : x));
 
@@ -131,12 +131,13 @@ test('Matching Engine: Composite comparison with 128-D Face Recognition vector',
 
   const matchRes = compareMissingWithSurvivor(missing, matchingSurvivorWithFace);
   assert.ok(matchRes.isCandidate, 'Should be candidate match');
-  assert.ok(matchRes.matchScore >= 85, `Expected matchScore >= 85, got ${matchRes.matchScore}`);
+  assert.ok(matchRes.matchScore >= 80, `Expected matchScore >= 80, got ${matchRes.matchScore}`);
   assert.ok(matchRes.factors.faceScore >= 80, `Expected faceScore >= 80, got ${matchRes.factors.faceScore}`);
+  assert.ok(matchRes.factors.faceDistance !== null, 'Face distance must be returned');
   assert.equal(matchRes.factors.faceMatchStatus, 'CONFIRMED_FACE_MATCH');
 });
 
-test('Matching Engine: Graceful fallback when face is absent or not detected', () => {
+test('Matching Engine: Final score falls back correctly (50/20/20/10) when face data is unavailable', () => {
   const missingNoFace = {
     id: 'MIS-2',
     name: 'Pooja Devi',
@@ -160,8 +161,9 @@ test('Matching Engine: Graceful fallback when face is absent or not detected', (
   const res = compareMissingWithSurvivor(missingNoFace, survivorNoFace);
   assert.ok(res.isCandidate, 'Text matching should still find candidate');
   assert.equal(res.factors.faceScore, null, 'Must NOT claim face match if face vector is null');
+  assert.equal(res.factors.faceDistance, null, 'faceDistance must be null when face is missing');
   assert.equal(res.factors.faceMatchStatus, 'NO_FACE_DATA');
-  assert.ok(res.matchScore >= 80, 'Deterministic score works correctly');
+  assert.ok(res.matchScore >= 80, 'Deterministic score works correctly with 50/20/20/10 fallback');
 });
 
 test('Matching Engine: Composite comparison between missing and survivor', () => {
