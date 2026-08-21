@@ -839,11 +839,13 @@ class SahayApp {
       const faceResult = await extractFaceDescriptor(dataUrl);
       if (faceResult && faceResult.detected && faceResult.descriptor) {
         if (faceInputHidden) faceInputHidden.value = JSON.stringify(faceResult.descriptor);
+        this[`_${target}PhotoQuality`] = faceResult.photoQuality || null;
         if (faceStatusEl) {
           faceStatusEl.innerHTML = `<span style="color:var(--success-green);">✓ Face Detected (${faceResult.confidence}% Conf &bull; 128-D Vector Ready)</span>`;
         }
       } else {
         if (faceInputHidden) faceInputHidden.value = '';
+        this[`_${target}PhotoQuality`] = faceResult?.photoQuality || null;
         if (faceStatusEl) {
           faceStatusEl.innerHTML = `<span style="color:var(--emergency-amber);">ℹ️ No human face detected (Using text matching)</span>`;
         }
@@ -868,6 +870,7 @@ class SahayApp {
 
     if (inputHidden) inputHidden.value = '';
     if (faceInputHidden) faceInputHidden.value = '';
+    this[`_${target}PhotoQuality`] = null;
     if (faceStatusEl) faceStatusEl.innerHTML = '';
     if (previewImg) previewImg.src = '';
     if (fileInput) fileInput.value = '';
@@ -952,10 +955,24 @@ class SahayApp {
         defaultLat = 26.32; defaultLng = 91.00;
       }
 
+      const photoDataUrl = document.getElementById('report-photo-data')?.value || '';
       let reportFaceDescriptor = null;
       const descRaw = document.getElementById('report-face-descriptor')?.value;
       if (descRaw) {
         try { reportFaceDescriptor = JSON.parse(descRaw); } catch (_) {}
+      }
+
+      let photoQuality = this._reportPhotoQuality || null;
+
+      // Extract descriptor if photo provided but not yet processed
+      if (!reportFaceDescriptor && photoDataUrl) {
+        try {
+          const quickRes = await extractFaceDescriptor(photoDataUrl);
+          if (quickRes && quickRes.detected && quickRes.descriptor) {
+            reportFaceDescriptor = quickRes.descriptor;
+            photoQuality = quickRes.photoQuality;
+          }
+        } catch (_) {}
       }
 
       const payload = {
@@ -967,8 +984,9 @@ class SahayApp {
         lastSeenLng: defaultLng,
         reporterName: fd.get('reporterName'),
         reporterContact: fd.get('reporterContact'),
-        photoUrl: document.getElementById('report-photo-data')?.value || '',
+        photoUrl: photoDataUrl,
         faceDescriptor: reportFaceDescriptor,
+        photoQuality,
         notes: fd.get('notes'),
         sourceType: 'FAMILY_MEMBER',
         medicalUrgency: 'HIGH'
@@ -1008,10 +1026,23 @@ class SahayApp {
         return;
       }
 
+      const photoDataUrl = document.getElementById('survivor-photo-data')?.value || '';
       let survFaceDescriptor = null;
       const survDescRaw = document.getElementById('survivor-face-descriptor')?.value;
       if (survDescRaw) {
         try { survFaceDescriptor = JSON.parse(survDescRaw); } catch (_) {}
+      }
+
+      let photoQuality = this._survivorPhotoQuality || null;
+
+      if (!survFaceDescriptor && photoDataUrl) {
+        try {
+          const quickRes = await extractFaceDescriptor(photoDataUrl);
+          if (quickRes && quickRes.detected && quickRes.descriptor) {
+            survFaceDescriptor = quickRes.descriptor;
+            photoQuality = quickRes.photoQuality;
+          }
+        } catch (_) {}
       }
 
       const payload = {
@@ -1020,8 +1051,9 @@ class SahayApp {
         gender: fd.get('gender'),
         campId: campIdVal,
         originVillage: fd.get('originVillage'),
-        photoUrl: document.getElementById('survivor-photo-data')?.value || '',
+        photoUrl: photoDataUrl,
         faceDescriptor: survFaceDescriptor,
+        photoQuality,
         physicalCondition: fd.get('physicalCondition')
       };
 

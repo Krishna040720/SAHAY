@@ -11,8 +11,9 @@
 let modelsLoaded = false;
 let modelLoadingPromise = null;
 
-// Primary & fallback CDN endpoints for model weights
+// Primary local endpoints with remote CDN fallbacks for neural model weights
 const MODEL_URLS = [
+  '/models',
   'https://cdn.jsdelivr.net/gh/cgarciagl/face-api.js@master/weights/',
   'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/'
 ];
@@ -46,11 +47,18 @@ export async function loadFaceApiModels() {
       }
     }
 
-    console.warn('[FaceAPI] Could not load model weights from remote CDN. Operating in deterministic text mode.');
+    console.warn('[FaceAPI] Could not load model weights. Operating in fallback mode.');
     return false;
   })();
 
   return modelLoadingPromise;
+}
+
+// Background preload models on page initialization
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    loadFaceApiModels().catch((e) => console.warn('[FaceAPI Preload Error]', e));
+  }, 300);
 }
 
 import { evaluateCanvasQuality } from './evidence-quality.js';
