@@ -53,11 +53,14 @@ export async function loadFaceApiModels() {
   return modelLoadingPromise;
 }
 
+import { evaluateCanvasQuality } from './evidence-quality.js';
+
 /**
- * Extracts a 128-dimensional numerical face descriptor embedding from an image.
+ * Extracts a 128-dimensional numerical face descriptor embedding from an image,
+ * along with deep photo quality and facial usability metrics.
  *
  * @param {HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|string} input - Image element or Base64 data URL
- * @returns {Promise<{ detected: boolean, descriptor: number[]|null, confidence: number, reason?: string, error?: string }>}
+ * @returns {Promise<{ detected: boolean, descriptor: number[]|null, confidence: number, photoQuality?: Object, reason?: string, error?: string }>}
  */
 export async function extractFaceDescriptor(input) {
   try {
@@ -78,13 +81,23 @@ export async function extractFaceDescriptor(input) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
-        img.onerror = (e) => reject(new Error('Failed to load image for face detection'));
+        img.onerror = () => reject(new Error('Failed to load image for face detection'));
         img.src = input;
       });
     }
 
     // Run face detection with TinyFaceDetector, landmark localization, and 128-D descriptor generation
     const detectorOptions = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.35 });
+
+    // Check multi-face count if method available
+    let totalFaces = 1;
+    try {
+      if (faceapi.detectAllFaces) {
+        const all = await faceapi.detectAllFaces(imageEl, detectorOptions);
+        if (all && all.length > 0) totalFaces = all.length;
+      }
+    } catch (_) {}
+
     const detection = await faceapi
       .detectSingleFace(imageEl, detectorOptions)
       .withFaceLandmarks()
@@ -92,16 +105,19 @@ export async function extractFaceDescriptor(input) {
 
     if (!detection) {
       console.log('[FaceAPI] No human face clearly detected in photo.');
+      const qualityMetrics = evaluateCanvasQuality(imageEl, null, 0);
       return {
         detected: false,
         descriptor: null,
         confidence: 0,
-        reason: 'NO_FACE_DETECTED'
+        reason: 'NO_FACE_DETECTED',
+        photoQuality: qualityMetrics
       };
     }
 
     const descriptorArray = Array.from(detection.descriptor).map((v) => Math.round(v * 10000) / 10000);
     const score = Math.round(detection.detection.score * 100);
+    const qualityMetrics = evaluateCanvasQuality(imageEl, detection.detection, totalFaces);
 
     console.log(`[FaceAPI] ✓ Face detected with ${score}% confidence. 128-D embedding extracted.`);
 
@@ -109,7 +125,8 @@ export async function extractFaceDescriptor(input) {
       detected: true,
       descriptor: descriptorArray,
       confidence: score,
-      box: detection.detection.box
+      box: detection.detection.box,
+      photoQuality: qualityMetrics
     };
   } catch (err) {
     console.error('[FaceAPI Extraction Error]', err);

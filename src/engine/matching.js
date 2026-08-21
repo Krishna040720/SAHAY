@@ -343,6 +343,9 @@ export function compareMissingWithSurvivor(missing, survivor, camp = null) {
   };
 }
 
+import { evaluateEvidenceReliability, analyzePhotoQuality } from './evidence-reliability.js';
+export { evaluateEvidenceReliability, analyzePhotoQuality };
+
 /**
  * Searches and ranks all matching candidates across registries.
  */
@@ -354,6 +357,14 @@ export function findMatchesForMissingPerson(missingPerson, survivorsList, campsM
     const comparison = compareMissingWithSurvivor(missingPerson, survivor, camp);
 
     if (comparison.isCandidate) {
+      const evidenceAssessment = evaluateEvidenceReliability({
+        comparison,
+        missingQuality: missingPerson.photoQuality || (missingPerson.hasPhoto ? analyzePhotoQuality({ hasPhoto: true, faceDetected: Boolean(missingPerson.faceDescriptor) }) : null),
+        survivorQuality: survivor.photoQuality || (survivor.photoUrl ? analyzePhotoQuality({ hasPhoto: true, faceDetected: Boolean(survivor.faceDescriptor) }) : null),
+        missingRecord: missingPerson,
+        survivorRecord: survivor
+      });
+
       candidates.push({
         missingPersonId: missingPerson.id,
         survivorId: survivor.id,
@@ -365,6 +376,7 @@ export function findMatchesForMissingPerson(missingPerson, survivorsList, campsM
         confidence: comparison.confidence,
         distanceKm: comparison.distanceKm,
         factors: comparison.factors,
+        evidenceAssessment,
         status: 'PENDING_REVIEW',
         createdAt: new Date().toISOString()
       });

@@ -1669,6 +1669,17 @@ class SahayApp {
       const locScore = m.factors?.locationScore ?? 88;
       const ageScore = m.factors?.ageScore ?? 90;
 
+      const evidence = m.evidenceAssessment || {};
+      const classification = evidence.classification || (m.matchScore >= 75 ? 'STRONG_EVIDENCE' : 'INSUFFICIENT_EVIDENCE');
+      let classBadge = '<span class="status-tag green">🛡️ STRONG EVIDENCE</span>';
+      if (classification === 'CONFLICTING_EVIDENCE') {
+        classBadge = '<span class="status-tag red" style="background:#FEE2E2; color:#991B1B; border:1px solid #F87171;">⚠️ CONFLICTING EVIDENCE &bull; Verification Required</span>';
+      } else if (classification === 'LOW_QUALITY_FACE') {
+        classBadge = '<span class="status-tag yellow" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;">📷 LOW QUALITY FACE &bull; Visual Triage</span>';
+      } else if (classification === 'INSUFFICIENT_EVIDENCE') {
+        classBadge = '<span class="status-tag neutral">🔍 INSUFFICIENT EVIDENCE</span>';
+      }
+
       return `
         <div class="ai-match-results-box">
           <div class="ai-score-hero">
@@ -1677,11 +1688,14 @@ class SahayApp {
               <span class="score-label">AI Match</span>
             </div>
             <div style="flex:1;">
-              <div style="font-weight:900; font-size:1.25rem; color:var(--primary-deep);">
-                High-Confidence AI Candidate: ${escapeHtml(m.missingName)} ➔ ${escapeHtml(m.survivorName)}
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.35rem;">
+                <div style="font-weight:900; font-size:1.25rem; color:var(--primary-deep);">
+                  Candidate: ${escapeHtml(m.missingName)} ➔ ${escapeHtml(m.survivorName)}
+                </div>
+                ${classBadge}
               </div>
               <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
-                Surfaced by composite multi-signal analysis (Name, Face Embedding, Distance, Demographics). Requires human volunteer confirmation before alerting family.
+                ${escapeHtml(evidence.evidenceSummary || 'Surfaced by composite multi-signal analysis (Name, Face Embedding, Distance, Demographics). Requires human volunteer confirmation before alerting family.')}
               </p>
             </div>
             <button class="btn-ui btn-ui-primary btn-ui-sm btn-nav-to-verification" data-match-id="${m.id}">
@@ -1764,11 +1778,23 @@ class SahayApp {
       const surv = this.state.survivors.find((s) => s.id === m.survivorId);
       const camp = this.state.camps.find((c) => c.id === m.campId);
 
+      const evidence = m.evidenceAssessment || {};
+      const classification = evidence.classification || (m.matchScore >= 75 ? 'STRONG_EVIDENCE' : 'INSUFFICIENT_EVIDENCE');
+      let classBadge = '<span class="status-tag green">🛡️ STRONG EVIDENCE</span>';
+      if (classification === 'CONFLICTING_EVIDENCE') {
+        classBadge = '<span class="status-tag red" style="background:#FEE2E2; color:#991B1B; border:1px solid #F87171;">⚠️ CONFLICTING EVIDENCE</span>';
+      } else if (classification === 'LOW_QUALITY_FACE') {
+        classBadge = '<span class="status-tag yellow" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;">📷 LOW QUALITY FACE</span>';
+      } else if (classification === 'INSUFFICIENT_EVIDENCE') {
+        classBadge = '<span class="status-tag neutral">🔍 INSUFFICIENT EVIDENCE</span>';
+      }
+
       return `
         <div class="card-box" style="margin-bottom:1.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:0.5rem;">
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-              <span class="status-tag blue">${m.matchScore}% AI SUGGESTED MATCH</span>
+              <span class="status-tag blue">${m.matchScore}% AI MATCH</span>
+              ${classBadge}
               ${m.factors?.faceScore != null ? `<span class="status-tag green">🤖 Face: ${m.factors.faceScore}% (Dist: ${m.factors.faceDistance})</span>` : '<span class="status-tag yellow">📷 No Face Vector</span>'}
               <span class="status-tag neutral">📛 Name: ${m.factors?.nameScore || 90}%</span>
               <h3 style="font-size:1.2rem; font-weight:800; margin-top:0.35rem; color:var(--primary-deep); width:100%;">

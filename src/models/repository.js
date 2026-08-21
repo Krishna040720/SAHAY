@@ -7,6 +7,7 @@
 
 import { calculateTrustScore, findMatchesForMissingPerson, compareMissingWithSurvivor } from '../engine/matching.js';
 import { analyzeCampResources } from '../engine/allocation.js';
+import { evaluateEvidenceReliability, analyzePhotoQuality } from '../engine/evidence-reliability.js';
 
 export class Repository {
   constructor() {
@@ -446,6 +447,7 @@ export class Repository {
         ? reportData.faceDescriptor.map(Number)
         : null,
       hasFaceVector: Array.isArray(reportData.faceDescriptor) && reportData.faceDescriptor.length === 128,
+      photoQuality: reportData.photoQuality || (reportData.photoUrl ? analyzePhotoQuality({ hasPhoto: true, faceDetected: Boolean(reportData.faceDescriptor) }) : null),
       witnessCorroborations: Number(reportData.witnessCorroborations || 0),
       createdAt: new Date().toISOString()
     };
@@ -499,6 +501,7 @@ export class Repository {
         ? survivorData.faceDescriptor.map(Number)
         : null,
       hasFaceVector: Array.isArray(survivorData.faceDescriptor) && survivorData.faceDescriptor.length === 128,
+      photoQuality: survivorData.photoQuality || (survivorData.photoUrl ? analyzePhotoQuality({ hasPhoto: true, faceDetected: Boolean(survivorData.faceDescriptor) }) : null),
       physicalCondition: survivorData.physicalCondition || 'Stable',
       checkinTime: new Date().toISOString(),
       originVillage: survivorData.originVillage || 'Disaster Zone',
@@ -522,6 +525,14 @@ export class Repository {
       const comp = compareMissingWithSurvivor(missing, newSurvivor, camp);
       if (comp.isCandidate) {
         const matchId = `MATCH-${missing.id}-${newSurvivor.id}`;
+        const evidenceAssessment = evaluateEvidenceReliability({
+          comparison: comp,
+          missingQuality: missing.photoQuality,
+          survivorQuality: newSurvivor.photoQuality,
+          missingRecord: missing,
+          survivorRecord: newSurvivor
+        });
+
         this.matches.set(matchId, {
           id: matchId,
           missingPersonId: missing.id,
@@ -534,6 +545,7 @@ export class Repository {
           confidence: comp.confidence,
           distanceKm: comp.distanceKm,
           factors: comp.factors,
+          evidenceAssessment,
           status: 'PENDING_REVIEW',
           createdAt: new Date().toISOString()
         });
